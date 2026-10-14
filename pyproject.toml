@@ -6,7 +6,7 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 requires-python = ">=3.12"
 dependencies = [
-    "edge-tts>=7.2.8",
+    "edge-tts>=7.3.1",
     "pillow>=12.0",
 ]
 
@@ -33,3 +33,4 @@ markers = ["golden: pixel-exact comparison with the recorded prototype output (s
 
 [tool.uv]
 exclude-newer = "7 days"
+exclude-newer-package = { edge-tts = false }

@@ -29,7 +29,9 @@ hashes recorded from that prototype.
 - Rendering runs at roughly 2.5× real time (pure Pillow per frame).
 
 - Dependencies resolve with `[tool.uv] exclude-newer` because the user's safe-chain guard blocks
-  very new releases; never bypass it with `--safe-chain-skip-minimum-package-age`.
+  very new releases. Bypass it (`--safe-chain-skip-minimum-package-age`) only with the user's
+  approval, as for edge-tts: Microsoft's speech service rejects anything below 7.3.0 (HTTP 403),
+  so `edge-tts>=7.3.1` is exempt from the window via `exclude-newer-package`.
 
 ## Commands
 

@@ -14,6 +14,33 @@ def test_edge_tts_cmd_for_inline_text_survives_leading_dash():
         "edge-tts", "--voice", "pl-PL-MarekNeural", "--rate=+0%", "--text=-- Raport.", "--write-media", "s.mp3"]
 
 
+def test_edge_tts_cmd_puts_pitch_after_rate():
+    assert narration.edge_tts_cmd("pl-PL-ZofiaNeural", "-15%", "s.mp3", pitch="-8Hz", text="Raport.") == [
+        "edge-tts", "--voice", "pl-PL-ZofiaNeural", "--rate=-15%", "--pitch=-8Hz", "--text=Raport.",
+        "--write-media", "s.mp3"]
+
+
+def test_run_tts_passes_pitch(tmp_path, monkeypatch):
+    seen = []
+
+    def fake_run(cmd, check):
+        seen.append(cmd)
+        Path(cmd[cmd.index("--write-subtitles") + 1]).write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(narration.subprocess, "run", fake_run)
+    narration.run_tts("Raport.", "pl-PL-ZofiaNeural", "-15%", str(tmp_path), pitch="-8Hz")
+    assert "--pitch=-8Hz" in seen[0]
+
+
+def test_synthesize_passes_pitch(tmp_path, monkeypatch):
+    seen = []
+    monkeypatch.setattr(narration.shutil, "which", lambda name: "/usr/bin/edge-tts")
+    monkeypatch.setattr(narration.subprocess, "run",
+                        lambda cmd: seen.append(cmd) or narration.subprocess.CompletedProcess(cmd, 0))
+    assert narration.synthesize("pl-PL-MarekNeural", "-15%", "Raport.", "s.mp3", pitch="-15Hz")
+    assert "--pitch=-15Hz" in seen[0]
+
+
 def test_run_tts_reads_the_given_text(tmp_path, monkeypatch):
     seen = []
 
@@ -38,7 +65,7 @@ def test_run_tts_reads_the_given_text(tmp_path, monkeypatch):
 def test_audition_plays_each_voice_in_order_and_skips_failures(tmp_path):
     played = []
 
-    def synth(voice, rate, text, mp3):
+    def synth(voice, rate, text, mp3, pitch=None):
         assert (rate, text) == ("-10%", "Witamy z powrotem, załogo.")
         if voice == "xx-XX-BrokenNeural":
             return False
@@ -51,6 +78,18 @@ def test_audition_plays_each_voice_in_order_and_skips_failures(tmp_path):
     assert results == [("pl-PL-ZofiaNeural", str(tmp_path / "01_pl-PL-ZofiaNeural.mp3")),
                        ("pl-PL-MarekNeural", str(tmp_path / "03_pl-PL-MarekNeural.mp3"))]
     assert played == [mp3 for _, mp3 in results]
+
+
+def test_audition_passes_pitch_to_synth(tmp_path):
+    pitches = []
+
+    def synth(voice, rate, text, mp3, pitch=None):
+        pitches.append(pitch)
+        return True
+
+    narration.audition(["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"], "Raport.", "-15%", str(tmp_path),
+                       synth=synth, pitch="-8Hz")
+    assert pitches == ["-8Hz", "-8Hz"]
 
 
 def test_find_player_is_none_without_afplay(monkeypatch):

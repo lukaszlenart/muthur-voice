@@ -26,14 +26,34 @@ def test_rate_accepts_leading_minus_in_both_forms(args):
     assert cli.build_parser().parse_args(["render", "intro.txt", *args]).rate == "-15%"
 
 
+@pytest.mark.parametrize("command", [["render", "intro.txt"], ["voices"]])
+@pytest.mark.parametrize("args", [["--pitch=-8Hz"], ["--pitch", "-8Hz"]])
+def test_pitch_accepts_leading_minus_in_both_forms(command, args):
+    assert cli.build_parser().parse_args([*command, *args]).pitch == "-8Hz"
+
+
 def test_render_defaults():
     a = cli.build_parser().parse_args(["render", "intro.txt"])
-    assert (a.voice, a.rate, a.wrap, a.whisper_model, a.title) == (
-        "pl-PL-ZofiaNeural", "-10%", 54, "medium", "MU/TH/UR 6000 :: USCSS MONTERO")
+    assert (a.voice, a.rate, a.pitch, a.wrap, a.whisper_model, a.title) == (
+        "pl-PL-ZofiaNeural", "-10%", None, 54, "medium", "MU/TH/UR 6000 :: USCSS MONTERO")
+
+
+def test_render_passes_pitch_to_tts(script, monkeypatch, rendered):
+    pitches = []
+
+    def fake_tts(text, voice, rate, workdir, pitch=None):
+        pitches.append(pitch)
+        mp3 = os.path.join(workdir, "narration.mp3")
+        open(mp3, "wb").close()
+        return mp3, [[0.0, 1.0, text]]
+
+    monkeypatch.setattr(cli.narration, "run_tts", fake_tts)
+    cli.main(["render", str(script), "--pitch=-8Hz"])
+    assert pitches == ["-8Hz"]
 
 
 def test_tts_mode_saves_narration_next_to_video(script, monkeypatch, rendered):
-    def fake_tts(source, voice, rate, workdir):
+    def fake_tts(source, voice, rate, workdir, pitch=None):
         mp3 = os.path.join(workdir, "narration.mp3")
         with open(mp3, "wb") as f:
             f.write(b"mp3")
@@ -76,7 +96,7 @@ def test_decomposed_bom_script_reaches_tts_and_screen_composed(tmp_path, monkeyp
     path.write_bytes(b"\xef\xbb\xbf" + unicodedata.normalize("NFD", "Matka was obudziła.\n").encode("utf-8"))
     spoken = []
 
-    def fake_tts(text, voice, rate, workdir):
+    def fake_tts(text, voice, rate, workdir, pitch=None):
         spoken.append(text)
         mp3 = os.path.join(workdir, "narration.mp3")
         open(mp3, "wb").close()
@@ -91,8 +111,9 @@ def test_decomposed_bom_script_reaches_tts_and_screen_composed(tmp_path, monkeyp
 def auditioned(monkeypatch):
     calls = []
 
-    def fake_audition(voices, text, rate, outdir, player=None):
-        calls.append({"voices": voices, "text": text, "rate": rate, "outdir": outdir, "player": player})
+    def fake_audition(voices, text, rate, outdir, player=None, pitch=None):
+        calls.append({"voices": voices, "text": text, "rate": rate, "outdir": outdir, "player": player,
+                      "pitch": pitch})
         return [(v, os.path.join(outdir, f"{v}.mp3")) for v in voices]
 
     monkeypatch.setattr(cli.narration, "audition", fake_audition)
@@ -104,7 +125,14 @@ def test_voices_defaults(monkeypatch, auditioned):
     cli.main(["voices"])
     (call,) = auditioned
     assert call["voices"] == cli.narration.DEFAULT_VOICES
-    assert (call["text"], call["rate"], call["player"]) == (cli.narration.SAMPLE, "-10%", print)
+    assert (call["text"], call["rate"], call["pitch"], call["player"]) == (
+        cli.narration.SAMPLE, "-10%", None, print)
+
+
+def test_voices_passes_pitch(monkeypatch, auditioned):
+    monkeypatch.setattr(cli.narration, "find_player", lambda: print)
+    cli.main(["voices", "--voice", "pl-PL-ZofiaNeural", "--rate=-15%", "--pitch=-8Hz"])
+    assert auditioned[0]["pitch"] == "-8Hz"
 
 
 def test_voices_repeatable_voice_and_equals_rate(monkeypatch, auditioned):

@@ -3,6 +3,7 @@
   muthur render intro.txt                        # edge-tts narration -> intro.mp4
   muthur render intro.txt --image montero.jpg    # image behind the text
   muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
+  muthur render intro.txt --voice pl-PL-ZofiaNeural --rate=-15% --pitch=-8Hz
   muthur render intro.txt --audio lektor.mp3     # own narration, subtitles aligned by Whisper
   muthur render intro.txt --no-tts               # silent preview, estimated timing
 """
@@ -27,6 +28,7 @@ def build_parser():
     r.add_argument("--image", help="background image (darkened behind the text)")
     r.add_argument("--voice", default="pl-PL-ZofiaNeural", help="or pl-PL-MarekNeural")
     r.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
+    r.add_argument("--pitch", help="voice pitch, e.g. --pitch=-8Hz")
     r.add_argument("--audio", help="use your own narration (e.g. from ElevenLabs) instead of edge-tts")
     r.add_argument("--srt", help="subtitles matching --audio (skips auto-alignment)")
     r.add_argument("--whisper-model", default="medium",
@@ -44,6 +46,7 @@ def build_parser():
                    help=f"repeatable; default: {', '.join(narration.DEFAULT_VOICES)}")
     v.add_argument("--text", default=narration.SAMPLE)
     v.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
+    v.add_argument("--pitch", help="voice pitch, e.g. --pitch=-8Hz")
     v.add_argument("--keep", metavar="DIR", help="save the samples in DIR")
     v.add_argument("--no-play", action="store_true", help="only save the samples")
     return ap
@@ -74,8 +77,8 @@ def render_command(a):
         elif a.no_tts:
             audio, cues = None, timing.estimate_cues(raw)
         else:
-            print(f"  narration: {a.voice} ({a.rate})")
-            audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp)
+            print(f"  narration: {a.voice} ({', '.join(filter(None, [a.rate, a.pitch]))})")
+            audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp, pitch=a.pitch)
             shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
         render_video(cues, audio, out, a.image, a.font, a.wrap, not a.no_upper, not a.no_hum, a.title)
 
@@ -86,10 +89,10 @@ def voices_command(a):
     keep = a.keep or (None if player else "audition")
     if keep:
         os.makedirs(keep, exist_ok=True)
-        results = narration.audition(voices, a.text, a.rate, keep, player=player)
+        results = narration.audition(voices, a.text, a.rate, keep, player=player, pitch=a.pitch)
     else:
         with tempfile.TemporaryDirectory() as tmp:
-            results = narration.audition(voices, a.text, a.rate, tmp, player=player)
+            results = narration.audition(voices, a.text, a.rate, tmp, player=player, pitch=a.pitch)
     if not results:
         sys.exit("no voice could be synthesised (check the voice names and your network)")
     if keep:

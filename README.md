@@ -21,6 +21,7 @@ uv run muthur render intro.txt                          # Polish edge-tts narrat
 uv run muthur render intro.txt --no-tts                 # silent preview, estimated timing
 uv run muthur render intro.txt --image montero.jpg      # darkened, green-tinted image behind the text
 uv run muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
+uv run muthur render intro.txt --voice pl-PL-ZofiaNeural --rate=-15% --pitch=-8Hz   # lower, flatter voice
 uv run muthur render intro.txt --audio lektor.mp3       # own recording (e.g. ElevenLabs), Whisper aligns subtitles
 uv run muthur render intro.txt --audio lektor.mp3 --srt intro_napisy.srt   # after fixing timing by hand
 ```
@@ -42,6 +43,7 @@ sentence in each default candidate:
 ```fish
 uv run muthur voices
 uv run muthur voices --voice pl-PL-MarekNeural --voice de-DE-SeraphinaMultilingualNeural --rate=-15%
+uv run muthur voices --voice pl-PL-ZofiaNeural --rate=-15% --pitch=-8Hz
 uv run muthur voices --text "Dlaczego Matka was obudziła?" --keep audition
 uv run edge-tts --list-voices | grep -E 'pl-PL|Multilingual'    # all candidates
 ```

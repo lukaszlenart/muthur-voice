@@ -1,0 +1,101 @@
+"""MU/TH/UR intro generator: text -> Polish narration + terminal-style video for TV.
+
+  muthur render intro.txt                        # edge-tts narration -> intro.mp4
+  muthur render intro.txt --image montero.jpg    # image behind the text
+  muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
+  muthur render intro.txt --audio lektor.mp3     # own narration, subtitles aligned by Whisper
+  muthur render intro.txt --no-tts               # silent preview, estimated timing
+"""
+import argparse
+import os
+import shutil
+import sys
+import tempfile
+
+from muthur import align, mux, narration, render, timing
+from muthur.text import read_text
+
+
+def build_parser():
+    ap = argparse.ArgumentParser(prog="muthur", description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="command", required=True)
+
+    r = sub.add_parser("render", help="text file -> MU/TH/UR video")
+    r.add_argument("text")
+    r.add_argument("-o", "--out")
+    r.add_argument("--image", help="background image (darkened behind the text)")
+    r.add_argument("--voice", default="pl-PL-ZofiaNeural", help="or pl-PL-MarekNeural")
+    r.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
+    r.add_argument("--audio", help="use your own narration (e.g. from ElevenLabs) instead of edge-tts")
+    r.add_argument("--srt", help="subtitles matching --audio (skips auto-alignment)")
+    r.add_argument("--whisper-model", default="medium",
+                   help="model for aligning --audio: medium (default, most accurate), small, base (faster, less accurate)")
+    r.add_argument("--no-align", action="store_true", help="with --audio: estimate timing instead of Whisper")
+    r.add_argument("--no-tts", action="store_true", help="no voice, estimated timing (preview)")
+    r.add_argument("--no-hum", action="store_true", help="no ship-hum background")
+    r.add_argument("--no-upper", action="store_true", help="keep original letter case")
+    r.add_argument("--wrap", type=int, default=54, help="characters per line")
+    r.add_argument("--font")
+    r.add_argument("--title", default="MU/TH/UR 6000 :: USCSS MONTERO")
+
+    v = sub.add_parser("voices", help="read a sample sentence with several voices and play them in turn")
+    v.add_argument("--voice", action="append",
+                   help=f"repeatable; default: {', '.join(narration.DEFAULT_VOICES)}")
+    v.add_argument("--text", default=narration.SAMPLE)
+    v.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
+    v.add_argument("--keep", metavar="DIR", help="save the samples in DIR")
+    v.add_argument("--no-play", action="store_true", help="only save the samples")
+    return ap
+
+
+def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title):
+    total, frames = render.iter_frames(cues, image, font_path, wrap, upper, title)
+    mux.encode(frames, total, mux.ffmpeg_command(total, audio, hum, out), out)
+
+
+def render_command(a):
+    out = a.out or os.path.splitext(a.text)[0] + ".mp4"
+    raw = read_text(a.text).strip()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        if a.audio:
+            audio = a.audio
+            if a.srt:
+                cues = timing.parse_srt(a.srt)
+            else:
+                cues = None if a.no_align else align.align_cues(raw, audio, a.whisper_model)
+                if cues is None:
+                    cues = timing.estimate_cues(raw)
+                else:
+                    srt_out = os.path.splitext(out)[0] + "_napisy.srt"
+                    timing.write_srt(cues, srt_out)
+                    print(f"  subtitles saved: {srt_out} (fix by hand and pass with --srt if needed)")
+        elif a.no_tts:
+            audio, cues = None, timing.estimate_cues(raw)
+        else:
+            print(f"  narration: {a.voice} ({a.rate})")
+            audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp)
+            shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
+        render_video(cues, audio, out, a.image, a.font, a.wrap, not a.no_upper, not a.no_hum, a.title)
+
+
+def voices_command(a):
+    voices = a.voice or narration.DEFAULT_VOICES
+    player = None if a.no_play else narration.find_player()
+    keep = a.keep or (None if player else "audition")
+    if keep:
+        os.makedirs(keep, exist_ok=True)
+        results = narration.audition(voices, a.text, a.rate, keep, player=player)
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            results = narration.audition(voices, a.text, a.rate, tmp, player=player)
+    if not results:
+        sys.exit("no voice could be synthesised (check the voice names and your network)")
+    if keep:
+        print(f"  samples saved in {keep}/")
+
+
+def main(argv=None):
+    a = build_parser().parse_args(argv)
+    {"render": render_command, "voices": voices_command}[a.command](a)

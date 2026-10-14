@@ -1,26 +1,37 @@
 import re
+import sys
 
 from muthur.text import read_text, split_sentences
 
 
+SRT_TIME = re.compile(r"(?:(\d+):)?(\d+):(\d+)(?:[,.](\d+))?")
+
+
 def srt_time(s):
-    h, m, rest = s.strip().split(":")
-    sec, frac = re.split(r"[,.]", rest)
+    match = SRT_TIME.fullmatch(s.strip())
+    if not match:
+        raise ValueError(f"bad timestamp {s.strip()!r}")
+    h, m, sec, frac = match.groups(default="0")
     return int(h) * 3600 + int(m) * 60 + int(sec) + int(frac.ljust(3, "0")[:3]) / 1000
 
 
 def parse_srt(path):
     cues = []
     blocks = re.split(r"\n\s*\n", read_text(path).strip())
-    for b in blocks:
+    for n, b in enumerate(blocks, 1):
         lines = [l for l in b.strip().splitlines() if l.strip()]
         ts = next((l for l in lines if "-->" in l), None)
         if not ts:
             continue
+        if lines[0] != ts and lines[0].strip().isdigit():
+            n = lines[0].strip()
         a, z = ts.split("-->")
         text = " ".join(lines[lines.index(ts) + 1:]).strip()
         if text:
-            cues.append([srt_time(a), srt_time(z), text])
+            try:
+                cues.append([srt_time(a), srt_time(z), text])
+            except ValueError as e:
+                sys.exit(f"{path}: cue {n}: {e} (expected HH:MM:SS,mmm)")
     return merge_into_sentences(cues)
 
 

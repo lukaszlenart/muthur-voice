@@ -62,3 +62,44 @@ def test_parse_srt_with_bom_and_decomposed_text(tmp_path):
     srt.write_bytes(b"\xef\xbb\xbf" + unicodedata.normalize(
         "NFD", "1\n00:00:00,000 --> 00:00:01,000\nŻółć gęślą jaźń.\n").encode("utf-8"))
     assert parse_srt(str(srt)) == [[0.0, 1.0, "Żółć gęślą jaźń."]]
+
+
+@pytest.mark.parametrize("ts, sec", [("00:00:12", 12.0), ("0:12,5", 12.5), ("1:02:03", 3723.0)])
+def test_srt_time_makes_hours_and_fraction_optional(ts, sec):
+    assert srt_time(ts) == pytest.approx(sec)
+
+
+@pytest.mark.parametrize("ts", ["12", "00:12:x", ""])
+def test_srt_time_rejects_malformed_timestamps(ts):
+    with pytest.raises(ValueError, match="bad timestamp"):
+        srt_time(ts)
+
+
+def test_parse_srt_accepts_hand_edited_timestamps(tmp_path):
+    srt = tmp_path / "napisy.srt"
+    srt.write_text("1\n0:01 --> 0:02,5\nRaport systemowy.\n\n"
+                   "2\n00:00:03 --> 00:00:04.25\nWitamy z powrotem.\n", encoding="utf-8")
+    assert parse_srt(str(srt)) == [[1.0, 2.5, "Raport systemowy."], [3.0, 4.25, "Witamy z powrotem."]]
+
+
+def test_parse_srt_names_file_and_cue_of_a_bad_timestamp(tmp_path):
+    srt = tmp_path / "intro_napisy.srt"
+    srt.write_text("1\n00:00:00,000 --> 00:00:01,000\nRaport.\n\n"
+                   "2\n00:00:01,000 --> 00:12:x\nWitamy.\n", encoding="utf-8")
+    with pytest.raises(SystemExit) as e:
+        parse_srt(str(srt))
+    assert str(e.value) == f"{srt}: cue 2: bad timestamp '00:12:x' (expected HH:MM:SS,mmm)"
+
+
+def test_parse_srt_counts_cues_without_an_index_line(tmp_path):
+    srt = tmp_path / "napisy.srt"
+    srt.write_text("00:00:00,000 --> 00:00:01,000\nRaport.\n\n"
+                   "00:00:01 --> bad\nWitamy.\n", encoding="utf-8")
+    with pytest.raises(SystemExit, match="cue 2: bad timestamp 'bad'"):
+        parse_srt(str(srt))
+
+
+def test_parse_srt_with_an_odd_index_line_still_parses(tmp_path):
+    srt = tmp_path / "napisy.srt"
+    srt.write_text("²\n00:00:00,000 --> 00:00:01,000\nRaport.\n", encoding="utf-8")
+    assert parse_srt(str(srt)) == [[0.0, 1.0, "Raport."]]

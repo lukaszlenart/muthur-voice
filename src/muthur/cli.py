@@ -9,6 +9,7 @@
 import argparse
 import os
 import shutil
+import sys
 import tempfile
 
 from muthur import align, mux, narration, render, timing
@@ -36,6 +37,14 @@ def build_parser():
     r.add_argument("--wrap", type=int, default=54, help="characters per line")
     r.add_argument("--font")
     r.add_argument("--title", default="MU/TH/UR 6000 :: USCSS MONTERO")
+
+    v = sub.add_parser("voices", help="read a sample sentence with several voices and play them in turn")
+    v.add_argument("--voice", action="append",
+                   help=f"repeatable; default: {', '.join(narration.DEFAULT_VOICES)}")
+    v.add_argument("--text", default=narration.SAMPLE)
+    v.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
+    v.add_argument("--keep", metavar="DIR", help="save the samples in DIR")
+    v.add_argument("--no-play", action="store_true", help="only save the samples")
     return ap
 
 
@@ -71,6 +80,22 @@ def render_command(a):
         render_video(cues, audio, out, a.image, a.font, a.wrap, not a.no_upper, not a.no_hum, a.title)
 
 
+def voices_command(a):
+    voices = a.voice or narration.DEFAULT_VOICES
+    player = None if a.no_play else narration.find_player()
+    keep = a.keep or (None if player else "audition")
+    if keep:
+        os.makedirs(keep, exist_ok=True)
+        results = narration.audition(voices, a.text, a.rate, keep, player=player)
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            results = narration.audition(voices, a.text, a.rate, tmp, player=player)
+    if not results:
+        sys.exit("no voice could be synthesised (check the voice names and your network)")
+    if keep:
+        print(f"  samples saved in {keep}/")
+
+
 def main(argv=None):
     a = build_parser().parse_args(argv)
-    {"render": render_command}[a.command](a)
+    {"render": render_command, "voices": voices_command}[a.command](a)

@@ -30,3 +30,30 @@ def test_run_tts_returns_sentence_cues(tmp_path, monkeypatch):
                      "--write-media", str(tmp_path / "narration.mp3"),
                      "--write-subtitles", str(tmp_path / "narration.srt")]]
     assert cues == [[0.0, 2.0, "Kurs został skorygowany."]]
+
+
+def test_audition_plays_each_voice_in_order_and_skips_failures(tmp_path):
+    played = []
+
+    def synth(voice, rate, text, mp3):
+        assert (rate, text) == ("-10%", "Witamy z powrotem, załogo.")
+        if voice == "xx-XX-BrokenNeural":
+            return False
+        Path(mp3).write_bytes(b"mp3")
+        return True
+
+    results = narration.audition(["pl-PL-ZofiaNeural", "xx-XX-BrokenNeural", "pl-PL-MarekNeural"],
+                                 "Witamy z powrotem, załogo.", "-10%", str(tmp_path),
+                                 synth=synth, player=played.append)
+    assert results == [("pl-PL-ZofiaNeural", str(tmp_path / "01_pl-PL-ZofiaNeural.mp3")),
+                       ("pl-PL-MarekNeural", str(tmp_path / "03_pl-PL-MarekNeural.mp3"))]
+    assert played == [mp3 for _, mp3 in results]
+
+
+def test_find_player_is_none_without_afplay(monkeypatch):
+    monkeypatch.setattr(narration.shutil, "which", lambda name: None)
+    assert narration.find_player() is None
+
+
+def test_default_voices_start_with_native_polish():
+    assert narration.DEFAULT_VOICES[:2] == ["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"]

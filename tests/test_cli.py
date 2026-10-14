@@ -67,3 +67,48 @@ def test_no_align_never_calls_whisper(script, monkeypatch, rendered):
     monkeypatch.setattr(cli.align, "align_cues", boom)
     cli.main(["render", str(script), "--audio", "voice.mp3", "--no-align"])
     assert rendered
+
+
+@pytest.fixture
+def auditioned(monkeypatch):
+    calls = []
+
+    def fake_audition(voices, text, rate, outdir, player=None):
+        calls.append({"voices": voices, "text": text, "rate": rate, "outdir": outdir, "player": player})
+        return [(v, os.path.join(outdir, f"{v}.mp3")) for v in voices]
+
+    monkeypatch.setattr(cli.narration, "audition", fake_audition)
+    return calls
+
+
+def test_voices_defaults(monkeypatch, auditioned):
+    monkeypatch.setattr(cli.narration, "find_player", lambda: print)
+    cli.main(["voices"])
+    (call,) = auditioned
+    assert call["voices"] == cli.narration.DEFAULT_VOICES
+    assert (call["text"], call["rate"], call["player"]) == (cli.narration.SAMPLE, "-10%", print)
+
+
+def test_voices_repeatable_voice_and_equals_rate(monkeypatch, auditioned):
+    monkeypatch.setattr(cli.narration, "find_player", lambda: print)
+    cli.main(["voices", "--voice", "pl-PL-MarekNeural", "--voice", "de-DE-SeraphinaMultilingualNeural",
+              "--rate=-15%", "--text", "Matka was obudziła."])
+    assert auditioned[0]["voices"] == ["pl-PL-MarekNeural", "de-DE-SeraphinaMultilingualNeural"]
+    assert auditioned[0]["rate"] == "-15%"
+
+
+def test_voices_without_afplay_saves_samples(tmp_path, monkeypatch, auditioned):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli.narration, "find_player", lambda: None)
+    cli.main(["voices"])
+    assert auditioned[0]["outdir"] == "audition"
+    assert auditioned[0]["player"] is None
+    assert (tmp_path / "audition").is_dir()
+
+
+def test_voices_fails_when_nothing_synthesised(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(cli.narration, "find_player", lambda: None)
+    monkeypatch.setattr(cli.narration, "audition", lambda *a, **k: [])
+    with pytest.raises(SystemExit, match="no voice"):
+        cli.main(["voices", "--no-play"])

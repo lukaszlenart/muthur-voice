@@ -26,3 +26,40 @@ def run_tts(text_file, voice, rate, workdir):
     srt = os.path.join(workdir, "narration.srt")
     subprocess.run(edge_tts_cmd(voice, rate, mp3, file=text_file, srt=srt), check=True)
     return mp3, parse_srt(srt)
+
+
+DEFAULT_VOICES = [
+    "pl-PL-ZofiaNeural",
+    "pl-PL-MarekNeural",
+    "de-DE-SeraphinaMultilingualNeural",
+    "de-DE-FlorianMultilingualNeural",
+    "en-US-AvaMultilingualNeural",
+    "en-US-AndrewMultilingualNeural",
+]
+SAMPLE = "Procedura wybudzania zakończona. Witamy z powrotem, załogo."
+
+
+def synthesize(voice, rate, text, mp3):
+    require_edge_tts()
+    return subprocess.run(edge_tts_cmd(voice, rate, mp3, text=text)).returncode == 0
+
+
+def find_player():
+    afplay = shutil.which("afplay")
+    if not afplay:
+        return None
+    return lambda mp3: subprocess.run([afplay, mp3])
+
+
+def audition(voices, text, rate, outdir, synth=synthesize, player=None):
+    results = []
+    for i, voice in enumerate(voices, 1):
+        mp3 = os.path.join(outdir, f"{i:02}_{voice}.mp3")
+        print(f"  [{i}/{len(voices)}] {voice}")
+        if not synth(voice, rate, text, mp3):
+            print(f"  ! {voice}: synthesis failed, skipping")
+            continue
+        results.append((voice, mp3))
+        if player:
+            player(mp3)
+    return results

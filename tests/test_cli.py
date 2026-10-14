@@ -62,10 +62,10 @@ def test_tts_mode_saves_narration_next_to_video(script, monkeypatch, rendered):
     monkeypatch.setattr(cli.narration, "run_tts", fake_tts)
     cli.main(["render", str(script)])
     assert (script.parent / "intro_lektor.mp3").read_bytes() == b"mp3"
-    cues, _audio, out, image, font, wrap, upper, hum, title = rendered[0]
+    cues, _audio, out, image, font, wrap, upper, hum, title, fx = rendered[0]
     assert cues == [[0.0, 1.0, "Raport systemowy."]]
     assert out == str(script.parent / "intro.mp4")
-    assert (image, font, wrap, upper, hum) == (None, None, 54, True, True)
+    assert (image, font, wrap, upper, hum, fx) == (None, None, 54, True, True, "echo")
 
 
 def test_own_audio_alignment_writes_editable_srt(script, tmp_path, monkeypatch, rendered):
@@ -73,6 +73,16 @@ def test_own_audio_alignment_writes_editable_srt(script, tmp_path, monkeypatch, 
     cli.main(["render", str(script), "--audio", "voice.mp3", "-o", str(tmp_path / "film.mp4")])
     assert "00:00:00,500 --> 00:00:01,500" in (tmp_path / "film_napisy.srt").read_text(encoding="utf-8")
     assert rendered[0][1] == "voice.mp3"
+
+
+def test_own_audio_gets_the_chosen_voice_fx(script, monkeypatch, rendered):
+    cli.main(["render", str(script), "--audio", "voice.mp3", "--no-align", "--voice-fx", "intercom"])
+    assert rendered[0][-1] == "intercom"
+
+
+def test_render_rejects_unknown_voice_fx(capsys):
+    with pytest.raises(SystemExit):
+        cli.build_parser().parse_args(["render", "intro.txt", "--voice-fx", "reverb"])
 
 
 def test_own_audio_without_whisper_estimates_timing(script, tmp_path, monkeypatch, rendered):
@@ -111,9 +121,9 @@ def test_decomposed_bom_script_reaches_tts_and_screen_composed(tmp_path, monkeyp
 def auditioned(monkeypatch):
     calls = []
 
-    def fake_audition(voices, text, rate, outdir, player=None, pitch=None):
+    def fake_audition(voices, text, rate, outdir, player=None, pitch=None, fx=None):
         calls.append({"voices": voices, "text": text, "rate": rate, "outdir": outdir, "player": player,
-                      "pitch": pitch})
+                      "pitch": pitch, "fx": fx})
         return [(v, os.path.join(outdir, f"{v}.mp3")) for v in voices]
 
     monkeypatch.setattr(cli.narration, "audition", fake_audition)
@@ -127,6 +137,21 @@ def test_voices_defaults(monkeypatch, auditioned):
     assert call["voices"] == cli.narration.DEFAULT_VOICES
     assert (call["text"], call["rate"], call["pitch"], call["player"]) == (
         cli.narration.SAMPLE, "-10%", None, print)
+
+
+def test_voices_without_voice_fx_plays_dry_samples(monkeypatch, auditioned):
+    monkeypatch.setattr(cli.narration, "find_player", lambda: print)
+    cli.main(["voices"])
+    assert auditioned[0]["fx"] is None
+
+
+def test_voices_runs_samples_through_the_chosen_fx(monkeypatch, auditioned):
+    applied = []
+    monkeypatch.setattr(cli.narration, "find_player", lambda: print)
+    monkeypatch.setattr(cli.mux, "apply_fx", lambda src, dst, fx: applied.append((src, dst, fx)) or True)
+    cli.main(["voices", "--voice-fx", "intercom"])
+    assert auditioned[0]["fx"]("a.mp3", "a_fx.mp3")
+    assert applied == [("a.mp3", "a_fx.mp3", "intercom")]
 
 
 def test_voices_passes_pitch(monkeypatch, auditioned):

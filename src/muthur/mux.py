@@ -3,8 +3,19 @@ import sys
 
 from muthur.render import FPS, H, LEAD_IN, W
 
+VOICE_FX = {
+    "echo": "aecho=0.8:0.5:40:0.12",
+    "intercom": "highpass=f=250,lowpass=f=4500,aecho=0.8:0.6:25:0.2,chorus=0.7:0.9:20:0.3:0.2:2",
+    "none": "",
+}
 
-def ffmpeg_command(total, audio, hum, out):
+
+def apply_fx(src, dst, fx):
+    cmd = ["ffmpeg", "-y", "-loglevel", "error", "-i", src, "-af", VOICE_FX[fx], dst]
+    return subprocess.run(cmd).returncode == 0
+
+
+def ffmpeg_command(total, audio, hum, out, fx="echo"):
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
     filters, maps = [], ["-map", "0:v"]
@@ -13,7 +24,8 @@ def ffmpeg_command(total, audio, hum, out):
     if audio:
         cmd += ["-i", audio]
         ms = int(LEAD_IN * 1000)
-        filters.append(f"[{inputs}:a]adelay={ms}|{ms},aecho=0.8:0.5:40:0.12[v]")
+        chain = f",{VOICE_FX[fx]}" if VOICE_FX[fx] else ""
+        filters.append(f"[{inputs}:a]adelay={ms}|{ms}{chain}[v]")
         mix.append("[v]")
         inputs += 1
     if hum:

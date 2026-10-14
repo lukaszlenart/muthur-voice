@@ -56,7 +56,7 @@ def find_player():
     return lambda mp3: subprocess.run([afplay, mp3])
 
 
-def audition(voices, text, rate, outdir, synth=synthesize, player=None, pitch=None):
+def audition(voices, text, rate, outdir, synth=synthesize, player=None, pitch=None, fx=None):
     results = []
     for i, voice in enumerate(voices, 1):
         mp3 = os.path.join(outdir, f"{i:02}_{voice}.mp3")
@@ -64,6 +64,12 @@ def audition(voices, text, rate, outdir, synth=synthesize, player=None, pitch=No
         if not synth(voice, rate, text, mp3, pitch=pitch):
             print(f"  ! {voice}: synthesis failed, skipping")
             continue
+        if fx:
+            wet = os.path.splitext(mp3)[0] + "_fx.mp3"
+            if fx(mp3, wet):
+                mp3 = wet
+            else:
+                print(f"  ! {voice}: voice effect failed, playing the dry sample")
         results.append((voice, mp3))
         if player:
             player(mp3)

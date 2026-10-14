@@ -92,6 +92,28 @@ def test_audition_passes_pitch_to_synth(tmp_path):
     assert pitches == ["-8Hz", "-8Hz"]
 
 
+def test_audition_plays_the_processed_sample_when_fx_is_given(tmp_path):
+    played, processed = [], []
+
+    def fx(src, dst):
+        processed.append((src, dst))
+        return True
+
+    results = narration.audition(["pl-PL-ZofiaNeural"], "Raport.", "-15%", str(tmp_path),
+                                 synth=lambda *a, **k: True, player=played.append, fx=fx)
+    dry, wet = str(tmp_path / "01_pl-PL-ZofiaNeural.mp3"), str(tmp_path / "01_pl-PL-ZofiaNeural_fx.mp3")
+    assert processed == [(dry, wet)]
+    assert results == [("pl-PL-ZofiaNeural", wet)]
+    assert played == [wet]
+
+
+def test_audition_falls_back_to_the_dry_sample_when_fx_fails(tmp_path):
+    played = []
+    narration.audition(["pl-PL-ZofiaNeural"], "Raport.", "-15%", str(tmp_path),
+                       synth=lambda *a, **k: True, player=played.append, fx=lambda src, dst: False)
+    assert played == [str(tmp_path / "01_pl-PL-ZofiaNeural.mp3")]
+
+
 def test_find_player_is_none_without_afplay(monkeypatch):
     monkeypatch.setattr(narration.shutil, "which", lambda name: None)
     assert narration.find_player() is None

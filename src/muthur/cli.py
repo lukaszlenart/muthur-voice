@@ -13,6 +13,7 @@ import sys
 import tempfile
 
 from muthur import align, mux, narration, render, timing
+from muthur.text import read_text
 
 
 def build_parser():
@@ -55,8 +56,7 @@ def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title):
 
 def render_command(a):
     out = a.out or os.path.splitext(a.text)[0] + ".mp4"
-    with open(a.text, encoding="utf-8") as f:
-        raw = f.read().strip()
+    raw = read_text(a.text).strip()
 
     with tempfile.TemporaryDirectory() as tmp:
         if a.audio:
@@ -75,7 +75,7 @@ def render_command(a):
             audio, cues = None, timing.estimate_cues(raw)
         else:
             print(f"  narration: {a.voice} ({a.rate})")
-            audio, cues = narration.run_tts(a.text, a.voice, a.rate, tmp)
+            audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp)
             shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
         render_video(cues, audio, out, a.image, a.font, a.wrap, not a.no_upper, not a.no_hum, a.title)
 

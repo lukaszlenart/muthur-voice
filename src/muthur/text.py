@@ -1,4 +1,10 @@
 import re
+import unicodedata
+
+
+def read_text(path):
+    with open(path, encoding="utf-8-sig") as f:
+        return unicodedata.normalize("NFC", f.read())
 
 
 def split_sentences(text):
@@ -6,4 +12,4 @@ def split_sentences(text):
 
 
 def norm_word(w):
-    return re.sub(r"[^0-9a-ząćęłńóśźż]", "", w.lower())
+    return re.sub(r"[^0-9a-ząćęłńóśźż]", "", unicodedata.normalize("NFC", w).lower())

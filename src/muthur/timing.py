@@ -1,18 +1,17 @@
 import re
 
-from muthur.text import split_sentences
+from muthur.text import read_text, split_sentences
 
 
 def srt_time(s):
     h, m, rest = s.strip().split(":")
-    sec, ms = re.split(r"[,.]", rest)
-    return int(h) * 3600 + int(m) * 60 + int(sec) + int(ms) / 1000
+    sec, frac = re.split(r"[,.]", rest)
+    return int(h) * 3600 + int(m) * 60 + int(sec) + int(frac.ljust(3, "0")[:3]) / 1000
 
 
 def parse_srt(path):
     cues = []
-    with open(path, encoding="utf-8") as f:
-        blocks = re.split(r"\n\s*\n", f.read().strip())
+    blocks = re.split(r"\n\s*\n", read_text(path).strip())
     for b in blocks:
         lines = [l for l in b.strip().splitlines() if l.strip()]
         ts = next((l for l in lines if "-->" in l), None)

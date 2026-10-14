@@ -1,3 +1,5 @@
+import unicodedata
+
 import pytest
 
 from muthur.timing import estimate_cues, merge_into_sentences, parse_srt, srt_time, write_srt
@@ -48,3 +50,15 @@ def test_estimate_cues_uses_length_with_minimum_and_gap():
     assert cues[0] == [0.0, 1.5, "Krótko."]
     assert cues[1][0] == pytest.approx(1.85)
     assert cues[1][1] == pytest.approx(1.85 + 27 / 13)
+
+
+def test_srt_time_pads_shortened_fraction():
+    assert srt_time("00:00:12,5") == pytest.approx(12.5)
+    assert srt_time("00:00:12.25") == pytest.approx(12.25)
+
+
+def test_parse_srt_with_bom_and_decomposed_text(tmp_path):
+    srt = tmp_path / "napisy.srt"
+    srt.write_bytes(b"\xef\xbb\xbf" + unicodedata.normalize(
+        "NFD", "1\n00:00:00,000 --> 00:00:01,000\nŻółć gęślą jaźń.\n").encode("utf-8"))
+    assert parse_srt(str(srt)) == [[0.0, 1.0, "Żółć gęślą jaźń."]]

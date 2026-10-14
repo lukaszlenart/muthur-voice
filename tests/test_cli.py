@@ -1,4 +1,5 @@
 import os
+import unicodedata
 
 import pytest
 
@@ -68,6 +69,23 @@ def test_no_align_never_calls_whisper(script, monkeypatch, rendered):
     cli.main(["render", str(script), "--audio", "voice.mp3", "--no-align"])
     assert rendered
 
+
+
+def test_decomposed_bom_script_reaches_tts_and_screen_composed(tmp_path, monkeypatch, rendered):
+    path = tmp_path / "intro.txt"
+    path.write_bytes(b"\xef\xbb\xbf" + unicodedata.normalize("NFD", "Matka was obudziła.\n").encode("utf-8"))
+    spoken = []
+
+    def fake_tts(text, voice, rate, workdir):
+        spoken.append(text)
+        mp3 = os.path.join(workdir, "narration.mp3")
+        open(mp3, "wb").close()
+        return mp3, [[0.0, 1.0, text]]
+
+    monkeypatch.setattr(cli.narration, "run_tts", fake_tts)
+    cli.main(["render", str(path)])
+    assert spoken == ["Matka was obudziła."]
+    assert rendered[0][0] == [[0.0, 1.0, "Matka was obudziła."]]
 
 @pytest.fixture
 def auditioned(monkeypatch):

@@ -20,11 +20,14 @@ def require_edge_tts():
         sys.exit("edge-tts not found: run `uv sync`")
 
 
-def run_tts(text_file, voice, rate, workdir):
+def run_tts(text, voice, rate, workdir):
     require_edge_tts()
+    script = os.path.join(workdir, "script.txt")
+    with open(script, "w", encoding="utf-8") as f:
+        f.write(text)
     mp3 = os.path.join(workdir, "narration.mp3")
     srt = os.path.join(workdir, "narration.srt")
-    subprocess.run(edge_tts_cmd(voice, rate, mp3, file=text_file, srt=srt), check=True)
+    subprocess.run(edge_tts_cmd(voice, rate, mp3, file=script, srt=srt), check=True)
     return mp3, parse_srt(srt)
 
 

@@ -4,6 +4,7 @@
   muthur render intro.txt --image montero.jpg    # image behind the text
   muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
   muthur render intro.txt --voice pl-PL-ZofiaNeural --rate=-15% --pitch=-8Hz
+  muthur render intro.txt --voice-fx intercom    # narration through a ship's speaker
   muthur render intro.txt --audio lektor.mp3     # own narration, subtitles aligned by Whisper
   muthur render intro.txt --no-tts               # silent preview, estimated timing
 """
@@ -29,6 +30,8 @@ def build_parser():
     r.add_argument("--voice", default="pl-PL-ZofiaNeural", help="or pl-PL-MarekNeural")
     r.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
     r.add_argument("--pitch", help="voice pitch, e.g. --pitch=-8Hz")
+    r.add_argument("--voice-fx", choices=mux.VOICE_FX, default="echo",
+                   help="effect on the narration: echo (default), intercom (ship's speaker), none")
     r.add_argument("--audio", help="use your own narration (e.g. from ElevenLabs) instead of edge-tts")
     r.add_argument("--srt", help="subtitles matching --audio (skips auto-alignment)")
     r.add_argument("--whisper-model", default="medium",
@@ -47,14 +50,16 @@ def build_parser():
     v.add_argument("--text", default=narration.SAMPLE)
     v.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
     v.add_argument("--pitch", help="voice pitch, e.g. --pitch=-8Hz")
+    v.add_argument("--voice-fx", choices=mux.VOICE_FX, default="none",
+                   help="play the samples through an effect: echo, intercom, none (default)")
     v.add_argument("--keep", metavar="DIR", help="save the samples in DIR")
     v.add_argument("--no-play", action="store_true", help="only save the samples")
     return ap
 
 
-def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title):
+def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title, fx):
     total, frames = render.iter_frames(cues, image, font_path, wrap, upper, title)
-    mux.encode(frames, total, mux.ffmpeg_command(total, audio, hum, out), out)
+    mux.encode(frames, total, mux.ffmpeg_command(total, audio, hum, out, fx), out)
 
 
 def render_command(a):
@@ -80,19 +85,21 @@ def render_command(a):
             print(f"  narration: {a.voice} ({', '.join(filter(None, [a.rate, a.pitch]))})")
             audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp, pitch=a.pitch)
             shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
-        render_video(cues, audio, out, a.image, a.font, a.wrap, not a.no_upper, not a.no_hum, a.title)
+        render_video(cues, audio, out, a.image, a.font, a.wrap, not a.no_upper, not a.no_hum, a.title,
+                     a.voice_fx)
 
 
 def voices_command(a):
     voices = a.voice or narration.DEFAULT_VOICES
     player = None if a.no_play else narration.find_player()
     keep = a.keep or (None if player else "audition")
+    fx = None if a.voice_fx == "none" else lambda src, dst: mux.apply_fx(src, dst, a.voice_fx)
     if keep:
         os.makedirs(keep, exist_ok=True)
-        results = narration.audition(voices, a.text, a.rate, keep, player=player, pitch=a.pitch)
+        results = narration.audition(voices, a.text, a.rate, keep, player=player, pitch=a.pitch, fx=fx)
     else:
         with tempfile.TemporaryDirectory() as tmp:
-            results = narration.audition(voices, a.text, a.rate, tmp, player=player, pitch=a.pitch)
+            results = narration.audition(voices, a.text, a.rate, tmp, player=player, pitch=a.pitch, fx=fx)
     if not results:
         sys.exit("no voice could be synthesised (check the voice names and your network)")
     if keep:

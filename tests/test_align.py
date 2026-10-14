@@ -104,3 +104,10 @@ def test_faster_whisper_can_decode_audio(tmp_path):
     subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=440:duration=1",
                     str(wav)], check=True)
     assert len(audio.decode_audio(str(wav))) == 16000
+
+
+def test_align_cues_defaults_to_medium_model(monkeypatch):
+    sizes = []
+    monkeypatch.setattr(align, "transcribe", lambda text, audio, size: sizes.append(size))
+    align.align_cues(TEXT, "voice.mp3")
+    assert sizes == ["medium"]

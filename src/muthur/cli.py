@@ -29,8 +29,8 @@ def build_parser():
     r.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
     r.add_argument("--audio", help="use your own narration (e.g. from ElevenLabs) instead of edge-tts")
     r.add_argument("--srt", help="subtitles matching --audio (skips auto-alignment)")
-    r.add_argument("--whisper-model", default="small",
-                   help="model for aligning --audio: base (fast), small (default), medium (most accurate)")
+    r.add_argument("--whisper-model", default="medium",
+                   help="model for aligning --audio: medium (default, most accurate), small, base (faster, less accurate)")
     r.add_argument("--no-align", action="store_true", help="with --audio: estimate timing instead of Whisper")
     r.add_argument("--no-tts", action="store_true", help="no voice, estimated timing (preview)")
     r.add_argument("--no-hum", action="store_true", help="no ship-hum background")

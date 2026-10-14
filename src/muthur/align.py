@@ -3,7 +3,7 @@ import difflib
 from muthur.text import norm_word, split_sentences
 
 
-def align_cues(text, audio, model_size="small"):
+def align_cues(text, audio, model_size="medium"):
     words = transcribe(text, audio, model_size)
     return None if words is None else match_cues(text, words)
 

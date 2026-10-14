@@ -26,10 +26,10 @@ def test_rate_accepts_leading_minus_in_both_forms(args):
     assert cli.build_parser().parse_args(["render", "intro.txt", *args]).rate == "-15%"
 
 
-def test_render_defaults_match_prototype():
+def test_render_defaults():
     a = cli.build_parser().parse_args(["render", "intro.txt"])
     assert (a.voice, a.rate, a.wrap, a.whisper_model, a.title) == (
-        "pl-PL-ZofiaNeural", "-10%", 54, "small", "MU/TH/UR 6000 :: USCSS MONTERO")
+        "pl-PL-ZofiaNeural", "-10%", 54, "medium", "MU/TH/UR 6000 :: USCSS MONTERO")
 
 
 def test_tts_mode_saves_narration_next_to_video(script, monkeypatch, rendered):

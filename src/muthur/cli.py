@@ -3,8 +3,7 @@
   muthur render intro.txt                        # edge-tts narration -> intro.mp4
   muthur render intro.txt --image montero.jpg    # image behind the text
   muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
-  muthur render intro.txt --voice pl-PL-ZofiaNeural --rate=-15% --pitch=-8Hz
-  muthur render intro.txt --voice-fx intercom    # narration through a ship's speaker
+  muthur render intro.txt --pitch=+0Hz --voice-fx echo   # natural pitch, lighter echo
   muthur render intro.txt --audio lektor.mp3     # own narration, subtitles aligned by Whisper
   muthur render intro.txt --no-tts               # silent preview, estimated timing
 """
@@ -17,6 +16,11 @@ import tempfile
 from muthur import align, mux, narration, render, timing
 from muthur.text import read_text
 
+VOICE = "pl-PL-ZofiaNeural"
+RATE = "-20%"
+PITCH = "-24Hz"
+VOICE_FX = "intercom"
+
 
 def build_parser():
     ap = argparse.ArgumentParser(prog="muthur", description=__doc__,
@@ -27,11 +31,11 @@ def build_parser():
     r.add_argument("text")
     r.add_argument("-o", "--out")
     r.add_argument("--image", help="background image (darkened behind the text)")
-    r.add_argument("--voice", default="pl-PL-ZofiaNeural", help="or pl-PL-MarekNeural")
-    r.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
-    r.add_argument("--pitch", help="voice pitch, e.g. --pitch=-8Hz")
-    r.add_argument("--voice-fx", choices=mux.VOICE_FX, default="echo",
-                   help="effect on the narration: echo (default), intercom (ship's speaker), none")
+    r.add_argument("--voice", default=VOICE, help="or pl-PL-MarekNeural")
+    r.add_argument("--rate", default=RATE, help="speech rate (default %(default)s), e.g. --rate=-15%%")
+    r.add_argument("--pitch", default=PITCH, help="voice pitch (default %(default)s), e.g. --pitch=+0Hz")
+    r.add_argument("--voice-fx", choices=mux.VOICE_FX, default=VOICE_FX,
+                   help="effect on the narration: intercom (ship's speaker, default), echo, none")
     r.add_argument("--audio", help="use your own narration (e.g. from ElevenLabs) instead of edge-tts")
     r.add_argument("--srt", help="subtitles matching --audio (skips auto-alignment)")
     r.add_argument("--whisper-model", default="medium",
@@ -48,10 +52,10 @@ def build_parser():
     v.add_argument("--voice", action="append",
                    help=f"repeatable; default: {', '.join(narration.DEFAULT_VOICES)}")
     v.add_argument("--text", default=narration.SAMPLE)
-    v.add_argument("--rate", default="-10%", help="speech rate, e.g. --rate=-15%%")
-    v.add_argument("--pitch", help="voice pitch, e.g. --pitch=-8Hz")
-    v.add_argument("--voice-fx", choices=mux.VOICE_FX, default="none",
-                   help="play the samples through an effect: echo, intercom, none (default)")
+    v.add_argument("--rate", default=RATE, help="speech rate (default %(default)s), e.g. --rate=-15%%")
+    v.add_argument("--pitch", default=PITCH, help="voice pitch (default %(default)s), e.g. --pitch=+0Hz")
+    v.add_argument("--voice-fx", choices=mux.VOICE_FX, default=VOICE_FX,
+                   help="play the samples through an effect: intercom (default), echo, none")
     v.add_argument("--keep", metavar="DIR", help="save the samples in DIR")
     v.add_argument("--no-play", action="store_true", help="only save the samples")
     return ap

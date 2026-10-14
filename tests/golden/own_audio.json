@@ -17,7 +17,7 @@
   "-i",
   "<FIX>/voice.mp3",
   "-filter_complex",
-  "[1:a]adelay=2000|2000,aecho=0.8:0.5:40:0.12[v];[v]anull[a]",
+  "[1:a]adelay=2000|2000,highpass=f=250,lowpass=f=4500,aecho=0.8:0.6:25:0.2,chorus=0.7:0.9:20:0.3:0.2:2[v];[v]anull[a]",
   "-map",
   "0:v",
   "-map",

@@ -20,6 +20,9 @@ hashes recorded from that prototype.
 - **fish shell.** Docs and scripts must not assume bash. System pip is blocked (PEP 668, Homebrew
   Python 3.14), so everything runs from the project venv.
 - **No spoilers.** Intro texts are shown to players; don't add scenario details to them.
+- Whisper alignment on the real `lektor.mp3` (2026-10-14): `medium` matched 15/16 sentences, all
+  within ~0.3 s of the recording's pauses; the default `small` matched 8/16 and `base` 5/16, both
+  badly misplaced (short common words match at the wrong place in the audio and pin sentences to the wrong times).
 - TTS mispronounces tokens like "MU/TH/UR"; there is no spoken-vs-displayed text override yet.
 - edge-tts has only two native Polish voices (Zofia, Marek); `*MultilingualNeural` voices can also
   read Polish. The user dislikes Zofia (the current default).

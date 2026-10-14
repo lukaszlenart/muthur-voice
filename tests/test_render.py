@@ -35,7 +35,7 @@ def _glyph(font, ch):
 @pytest.mark.parametrize("ch,base", list(zip(POLISH, BASE)))
 def test_default_font_draws_polish_diacritics(ch, base):
     font = load_font(46)
-    assert _glyph(font, ch) != _glyph(font, "͸")  # unassigned code point -> missing-glyph box
+    assert _glyph(font, ch) != _glyph(font, "\u0378")  # unassigned code point -> missing-glyph box
     assert _glyph(font, ch) != _glyph(font, base)
 
 

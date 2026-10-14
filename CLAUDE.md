@@ -25,7 +25,8 @@ hashes recorded from that prototype.
   badly misplaced (short common words match at the wrong place in the audio and pin sentences to the wrong times).
 - TTS mispronounces tokens like "MU/TH/UR"; there is no spoken-vs-displayed text override yet.
 - edge-tts has only two native Polish voices (Zofia, Marek); `*MultilingualNeural` voices can also
-  read Polish. The user dislikes Zofia (the current default).
+  read Polish. Listening for #2 (2026-10-14) settled the defaults: Zofia at `--rate=-20% --pitch=-24Hz`
+  through `--voice-fx intercom`, the best so far but not ideal. The fallback is ElevenLabs via `--audio`.
 - Rendering runs at roughly 2.5× real time (pure Pillow per frame).
 
 - Dependencies resolve with `[tool.uv] exclude-newer` because the user's safe-chain guard blocks

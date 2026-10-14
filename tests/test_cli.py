@@ -35,7 +35,7 @@ def test_pitch_accepts_leading_minus_in_both_forms(command, args):
 def test_render_defaults():
     a = cli.build_parser().parse_args(["render", "intro.txt"])
     assert (a.voice, a.rate, a.pitch, a.wrap, a.whisper_model, a.title) == (
-        "pl-PL-ZofiaNeural", "-10%", None, 54, "medium", "MU/TH/UR 6000 :: USCSS MONTERO")
+        "pl-PL-ZofiaNeural", "-20%", "-24Hz", 54, "medium", "MU/TH/UR 6000 :: USCSS MONTERO")
 
 
 def test_render_passes_pitch_to_tts(script, monkeypatch, rendered):
@@ -65,7 +65,7 @@ def test_tts_mode_saves_narration_next_to_video(script, monkeypatch, rendered):
     cues, _audio, out, image, font, wrap, upper, hum, title, fx = rendered[0]
     assert cues == [[0.0, 1.0, "Raport systemowy."]]
     assert out == str(script.parent / "intro.mp4")
-    assert (image, font, wrap, upper, hum, fx) == (None, None, 54, True, True, "echo")
+    assert (image, font, wrap, upper, hum, fx) == (None, None, 54, True, True, "intercom")
 
 
 def test_own_audio_alignment_writes_editable_srt(script, tmp_path, monkeypatch, rendered):
@@ -136,13 +136,22 @@ def test_voices_defaults(monkeypatch, auditioned):
     (call,) = auditioned
     assert call["voices"] == cli.narration.DEFAULT_VOICES
     assert (call["text"], call["rate"], call["pitch"], call["player"]) == (
-        cli.narration.SAMPLE, "-10%", None, print)
+        cli.narration.SAMPLE, "-20%", "-24Hz", print)
 
 
-def test_voices_without_voice_fx_plays_dry_samples(monkeypatch, auditioned):
+def test_voices_with_voice_fx_none_plays_dry_samples(monkeypatch, auditioned):
     monkeypatch.setattr(cli.narration, "find_player", lambda: print)
-    cli.main(["voices"])
+    cli.main(["voices", "--voice-fx", "none"])
     assert auditioned[0]["fx"] is None
+
+
+def test_voices_default_to_the_render_voice_fx(monkeypatch, auditioned):
+    applied = []
+    monkeypatch.setattr(cli.narration, "find_player", lambda: print)
+    monkeypatch.setattr(cli.mux, "apply_fx", lambda src, dst, fx: applied.append(fx) or True)
+    cli.main(["voices"])
+    auditioned[0]["fx"]("a.mp3", "a_fx.mp3")
+    assert applied == ["intercom"]
 
 
 def test_voices_runs_samples_through_the_chosen_fx(monkeypatch, auditioned):

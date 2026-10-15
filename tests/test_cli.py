@@ -95,6 +95,16 @@ def test_srt_without_audio_is_rejected_before_tts(script, monkeypatch, capsys):
     assert "--srt needs --audio" in capsys.readouterr().err
 
 
+def test_no_align_without_audio_is_rejected_before_tts(script, monkeypatch, capsys):
+    def boom(*a, **k):
+        raise AssertionError("edge-tts must not run when --no-align is rejected")
+    monkeypatch.setattr(cli.narration, "run_tts", boom)
+    with pytest.raises(SystemExit) as e:
+        cli.main(["render", str(script), "--no-align"])
+    assert e.value.code == 2
+    assert "--no-align needs --audio" in capsys.readouterr().err
+
+
 def test_own_audio_without_whisper_estimates_timing(script, tmp_path, monkeypatch, rendered):
     monkeypatch.setattr(cli.align, "align_cues", lambda *a: None)
     cli.main(["render", str(script), "--audio", "voice.mp3"])

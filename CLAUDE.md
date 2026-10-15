@@ -51,6 +51,10 @@ uv run python tests/golden/record.py   # re-record golden hashes, only after an 
 
 ## Architecture
 
+`cli.parse_args` first applies `muthur.toml` (or `--config`) with `config.apply`, which derives the
+allowed keys from each subparser's actions and calls `set_defaults`, so a new flag is configurable
+without touching `config.py`.
+
 Everything converges on **cues**: mutable `[start_sec, end_sec, sentence]` lists relative to the
 start of the audio. `cli.render_command` picks the source:
 

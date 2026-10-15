@@ -7,6 +7,11 @@ from muthur import cli
 from muthur.timing import estimate_cues
 
 
+@pytest.fixture(autouse=True)
+def without_config_file(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+
+
 @pytest.fixture
 def rendered(monkeypatch):
     calls = []

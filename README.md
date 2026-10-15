@@ -27,7 +27,8 @@ uv run muthur render intro.txt --audio lektor.mp3 --srt intro_napisy.srt   # aft
 ```
 
 The default narration is `pl-PL-ZofiaNeural` at `--rate=-20% --pitch=-24Hz`, played through
-`--voice-fx intercom` (a ship's speaker). The effect also applies to `--audio`; pass
+`--voice-fx intercom` (a ship's speaker); `--voice-fx old-intercom` is a narrower, slightly
+distorted 1979-style PA. The effect also applies to `--audio`; pass
 `--voice-fx none` to keep your recording dry.
 
 Files written next to the video (`-o` changes the base name):

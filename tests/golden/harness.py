@@ -1,3 +1,4 @@
+import contextlib
 import hashlib
 import os
 from pathlib import Path
@@ -54,7 +55,7 @@ def run_scenario(name, main, tmp):
         procs.append(FakeFFmpeg(cmd, stdin))
         return procs[-1]
 
-    with mock.patch("subprocess.Popen", popen):
+    with mock.patch("subprocess.Popen", popen), contextlib.chdir(tmp):
         main([_replace(a, subs) for a in SCENARIOS[name]])
     (proc,) = procs
     back = {v: k for k, v in subs.items()}

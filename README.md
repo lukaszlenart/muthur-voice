@@ -20,7 +20,7 @@ The output is a 1080p H.264 MP4 that plays from a USB stick on any TV.
 uv run muthur render intro.txt                          # Polish edge-tts narration -> intro.mp4
 uv run muthur render intro.txt --pitch=+0Hz --voice-fx echo   # natural pitch, lighter echo
 uv run muthur render intro.txt --no-tts                 # silent preview, estimated timing
-uv run muthur render intro.txt --image montero.jpg      # darkened, green-tinted image behind the text
+uv run muthur render intro.txt --image examples/orbit/background.jpg   # darkened, green-tinted image behind the text
 uv run muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
 uv run muthur render intro.txt --audio lektor.mp3       # own recording (e.g. ElevenLabs), Whisper aligns subtitles
 uv run muthur render intro.txt --audio lektor.mp3 --srt intro_napisy.srt   # after fixing timing by hand
@@ -38,6 +38,15 @@ Files written next to the video (`-o` changes the base name):
 | `--audio` with Whisper | `intro.mp4`, `intro_napisy.srt` (edit it, then pass it back with `--srt`) |
 | `--no-tts`, `--audio --srt` | `intro.mp4` |
 
+### Examples
+
+[`examples/`](examples/README.md) holds four ready intros, each with its own text, settings and
+background image:
+
+```fish
+uv run muthur render examples/wake-up/intro.txt --config examples/wake-up/muthur.toml
+```
+
 ### Settings file
 
 Instead of repeating flags each session, put them in `muthur.toml` in the current directory (or
@@ -53,7 +62,7 @@ rate = "-20%"
 pitch = "-24Hz"
 voice_fx = "intercom"
 title = "MU/TH/UR 6000 :: USCSS MONTERO"
-image = "montero.jpg"
+image = "examples/orbit/background.jpg"
 whisper_model = "medium"
 wrap = 54
 hum = true

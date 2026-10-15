@@ -1,0 +1,5 @@
+# Zofia with a lighter echo instead of the intercom.
+[render]
+voice_fx = "echo"
+title = "MU/TH/UR 6000 :: USCSS VESTA"
+image = "background.jpg"

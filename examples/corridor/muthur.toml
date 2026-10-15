@@ -1,0 +1,7 @@
+# A male voice, slightly faster and less lowered than the default.
+[render]
+voice = "pl-PL-MarekNeural"
+rate = "-15%"
+pitch = "-10Hz"
+title = "MU/TH/UR 6000 :: USCSS HALDANE"
+image = "background.jpg"

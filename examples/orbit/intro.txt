@@ -1,0 +1,9 @@
+Raport nawigacyjny.
+Jednostka: USCSS Vesta. Pozycja: orbita stacjonarna. Odległość od celu: czterysta kilometrów.
+Podróż dobiegła końca. Pod wami leży planeta, którą do tej pory znaliście tylko z map.
+Atmosfera: gęsta i nieprzyjazna. Temperatura na powierzchni: minus czterdzieści stopni.
+Łączność z kolonią: brak.
+Prom desantowy jest gotowy do startu. Zapasy zostały uzupełnione.
+Kontrakt jest jasny. Zejść na powierzchnię, ocenić sytuację i złożyć raport.
+Firma oczekuje wyników.
+Powodzenia.

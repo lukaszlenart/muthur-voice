@@ -1,7 +1,7 @@
 """MU/TH/UR intro generator: text -> Polish narration + terminal-style video for TV.
 
   muthur render intro.txt                        # edge-tts narration -> intro.mp4
-  muthur render intro.txt --image montero.jpg    # image behind the text
+  muthur render intro.txt --image examples/orbit/background.jpg   # image behind the text
   muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
   muthur render intro.txt --pitch=+0Hz --voice-fx echo   # natural pitch, lighter echo
   muthur render intro.txt --audio lektor.mp3     # own narration, subtitles aligned by Whisper
@@ -123,7 +123,7 @@ def subcommands(parser):
     return next(a for a in parser._actions if isinstance(a, argparse._SubParsersAction)).choices
 
 
-def parse_args(argv=None):
+def parse_args(argv=None, check_files=False):
     pre = argparse.ArgumentParser(add_help=False)
     pre.add_argument("--config")
     path = config.find(pre.parse_known_args(argv)[0].config)
@@ -133,15 +133,28 @@ def parse_args(argv=None):
         config.apply(subcommands(parser), settings, path)
         print(f"  config: {os.path.abspath(path)}")
     a = parser.parse_args(argv)
-    if a.command == "render" and not a.audio:
-        render = subcommands(parser)["render"]
+    if a.command != "render":
+        return a
+    render = subcommands(parser)["render"]
+
+    def fail(key, problem, file_problem):
+        from_file = key in settings.get("render", {}) and getattr(a, key) == render.get_default(key)
+        parser.error(f"{key} in {path} {file_problem}" if from_file else problem)
+
+    if not a.audio:
         for key, flag, used in [("srt", "--srt", a.srt), ("align", "--no-align", not a.align)]:
             if used:
-                from_file = key in settings.get("render", {}) and getattr(a, key) == render.get_default(key)
-                parser.error(f"{key} in {path} needs audio" if from_file else f"{flag} needs --audio")
+                fail(key, f"{flag} needs --audio", "needs audio")
+    if check_files:
+        if not os.path.isfile(a.text):
+            parser.error(f"text not found: {a.text}")
+        for key in ["image", "font", "audio", "srt"]:
+            value = getattr(a, key)
+            if value and not os.path.isfile(value):
+                fail(key, f"--{key} not found: {value}", f"not found: {value}")
     return a
 
 
 def main(argv=None):
-    a = parse_args(argv)
+    a = parse_args(argv, check_files=True)
     {"render": render_command, "voices": voices_command}[a.command](a)

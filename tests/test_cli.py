@@ -13,6 +13,12 @@ def without_config_file(tmp_path, monkeypatch):
 
 
 @pytest.fixture
+def voice(tmp_path):
+    (tmp_path / "voice.mp3").write_bytes(b"")
+    return "voice.mp3"
+
+
+@pytest.fixture
 def rendered(monkeypatch):
     calls = []
     monkeypatch.setattr(cli, "render_video", lambda *args: calls.append(args))
@@ -73,14 +79,14 @@ def test_tts_mode_saves_narration_next_to_video(script, monkeypatch, rendered):
     assert (image, font, wrap, upper, hum, fx) == (None, None, 54, True, True, "intercom")
 
 
-def test_own_audio_alignment_writes_editable_srt(script, tmp_path, monkeypatch, rendered):
+def test_own_audio_alignment_writes_editable_srt(script, tmp_path, monkeypatch, rendered, voice):
     monkeypatch.setattr(cli.align, "align_cues", lambda text, audio, size: [[0.5, 1.5, "Raport systemowy."]])
     cli.main(["render", str(script), "--audio", "voice.mp3", "-o", str(tmp_path / "film.mp4")])
     assert "00:00:00,500 --> 00:00:01,500" in (tmp_path / "film_napisy.srt").read_text(encoding="utf-8")
     assert rendered[0][1] == "voice.mp3"
 
 
-def test_own_audio_gets_the_chosen_voice_fx(script, monkeypatch, rendered):
+def test_own_audio_gets_the_chosen_voice_fx(script, monkeypatch, rendered, voice):
     cli.main(["render", str(script), "--audio", "voice.mp3", "--no-align", "--voice-fx", "intercom"])
     assert rendered[0][-1] == "intercom"
 
@@ -110,20 +116,52 @@ def test_no_align_without_audio_is_rejected_before_tts(script, monkeypatch, caps
     assert "--no-align needs --audio" in capsys.readouterr().err
 
 
-def test_own_audio_without_whisper_estimates_timing(script, tmp_path, monkeypatch, rendered):
+def test_own_audio_without_whisper_estimates_timing(script, tmp_path, monkeypatch, rendered, voice):
     monkeypatch.setattr(cli.align, "align_cues", lambda *a: None)
     cli.main(["render", str(script), "--audio", "voice.mp3"])
     assert rendered[0][0] == estimate_cues("Raport systemowy. Witamy z powrotem, załogo.")
     assert not (tmp_path / "intro_napisy.srt").exists()
 
 
-def test_no_align_never_calls_whisper(script, monkeypatch, rendered):
+def test_no_align_never_calls_whisper(script, monkeypatch, rendered, voice):
     def boom(*a):
         raise AssertionError("Whisper must not run with --no-align")
     monkeypatch.setattr(cli.align, "align_cues", boom)
     cli.main(["render", str(script), "--audio", "voice.mp3", "--no-align"])
     assert rendered
 
+
+def no_tts(*a, **k):
+    raise AssertionError("edge-tts must not run when an input file is missing")
+
+
+@pytest.mark.parametrize("flag", ["--image", "--font", "--audio"])
+def test_missing_input_file_is_rejected_before_tts(script, monkeypatch, capsys, flag):
+    monkeypatch.setattr(cli.narration, "run_tts", no_tts)
+    with pytest.raises(SystemExit) as e:
+        cli.main(["render", str(script), flag, "brak.jpg"])
+    assert e.value.code == 2
+    assert f"{flag} not found: brak.jpg" in capsys.readouterr().err
+
+
+def test_missing_srt_is_rejected(script, monkeypatch, capsys, voice):
+    with pytest.raises(SystemExit):
+        cli.main(["render", str(script), "--audio", voice, "--srt", "brak.srt"])
+    assert "--srt not found: brak.srt" in capsys.readouterr().err
+
+
+def test_missing_text_file_is_rejected(capsys):
+    with pytest.raises(SystemExit):
+        cli.main(["render", "brak.txt"])
+    assert "text not found: brak.txt" in capsys.readouterr().err
+
+
+def test_missing_file_from_config_names_the_config(script, tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cli.narration, "run_tts", no_tts)
+    (tmp_path / "muthur.toml").write_text('[render]\nimage = "montero.jpg"\n', encoding="utf-8")
+    with pytest.raises(SystemExit):
+        cli.main(["render", str(script)])
+    assert f"image in muthur.toml not found: {tmp_path / 'montero.jpg'}" in capsys.readouterr().err
 
 
 def test_decomposed_bom_script_reaches_tts_and_screen_composed(tmp_path, monkeypatch, rendered):

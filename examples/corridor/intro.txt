@@ -1,0 +1,10 @@
+Uwaga. Komunikat dla całej załogi.
+Jednostka: USCSS Haldane. Status: alarm systemowy drugiego stopnia.
+Wykryto nieprawidłowe odczyty w sektorze C. Czujniki ciśnienia nie odpowiadają.
+Grodzie awaryjne zostały zamknięte automatycznie.
+Oświetlenie korytarzy przełączono na tryb rezerwowy.
+Przyczyna awarii pozostaje nieznana.
+Zgodnie z procedurą załoga ma zgłosić się do punktów kontrolnych.
+Nie poruszajcie się pojedynczo.
+Firma docenia waszą lojalność.
+Koniec komunikatu.

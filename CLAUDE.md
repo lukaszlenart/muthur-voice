@@ -45,6 +45,7 @@ uv run pytest -m "not golden"          # fast loop
 uv run pytest tests/test_timing.py::test_merges_cues_split_mid_sentence -v
 uv run muthur render intro.txt --no-tts -o /tmp/x.mp4   # quickest real render
 uv run python tests/golden/record.py   # re-record golden hashes, only after an intended look change
+uv run python examples/make_backgrounds.py   # redraw examples/*/background.jpg
 ```
 
 `lektor.mp3` in the root is the user's own recording; never overwrite it. Media files are gitignored.

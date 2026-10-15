@@ -1,0 +1,6 @@
+# Original letter case on screen and a narrower column.
+[render]
+upper = false
+wrap = 46
+title = "MU/TH/UR 6000 :: USCSS TAMSIN"
+image = "background.jpg"

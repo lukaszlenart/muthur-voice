@@ -28,9 +28,12 @@ def test_voice_and_hum_are_mixed():
 
 
 INTERCOM = "highpass=f=250,lowpass=f=4500,aecho=0.8:0.6:25:0.2,chorus=0.7:0.9:20:0.3:0.2:2"
+OLD_INTERCOM = ("highpass=f=400,lowpass=f=3000,volume=3,asoftclip=type=tanh,volume=0.4,"
+                "aecho=0.8:0.7:60|110:0.3|0.2")
 
 
-@pytest.mark.parametrize("fx, chain", [("echo", ",aecho=0.8:0.5:40:0.12"), ("intercom", "," + INTERCOM), ("none", "")])
+@pytest.mark.parametrize("fx, chain", [("echo", ",aecho=0.8:0.5:40:0.12"), ("intercom", "," + INTERCOM),
+                                       ("old-intercom", "," + OLD_INTERCOM), ("none", "")])
 def test_voice_fx_replaces_the_echo(fx, chain):
     assert ffmpeg_command(6.0, "voice.mp3", False, "o.mp4", fx=fx) == VIDEO_IN + [
         "-i", "voice.mp3",

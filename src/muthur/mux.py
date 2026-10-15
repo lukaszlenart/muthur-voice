@@ -6,6 +6,8 @@ from muthur.render import FPS, H, LEAD_IN, W
 VOICE_FX = {
     "echo": "aecho=0.8:0.5:40:0.12",
     "intercom": "highpass=f=250,lowpass=f=4500,aecho=0.8:0.6:25:0.2,chorus=0.7:0.9:20:0.3:0.2:2",
+    "old-intercom": "highpass=f=400,lowpass=f=3000,volume=3,asoftclip=type=tanh,volume=0.4,"
+                    "aecho=0.8:0.7:60|110:0.3|0.2",
     "none": "",
 }
 

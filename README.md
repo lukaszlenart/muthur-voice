@@ -38,6 +38,33 @@ Files written next to the video (`-o` changes the base name):
 | `--audio` with Whisper | `intro.mp4`, `intro_napisy.srt` (edit it, then pass it back with `--srt`) |
 | `--no-tts`, `--audio --srt` | `intro.mp4` |
 
+### Settings file
+
+Instead of repeating flags each session, put them in `muthur.toml` in the current directory (or
+pass `--config FILE`). A flag beats the file, and the file beats the built-in default. Keys are the
+long flag names with `_` for `-`; `--no-*` flags become booleans (`hum`, `upper`, `tts`, `align`,
+`play`), each also available as a positive flag (`--hum`) to undo a `false` from the file. Paths
+(`image`, `audio`, `srt`, `font`, `out`, `keep`) are relative to the file. An unknown key is an error.
+
+```toml
+[render]
+voice = "pl-PL-ZofiaNeural"
+rate = "-20%"
+pitch = "-24Hz"
+voice_fx = "intercom"
+title = "MU/TH/UR 6000 :: USCSS MONTERO"
+image = "montero.jpg"
+whisper_model = "medium"
+wrap = 54
+hum = true
+upper = true
+
+[voices]
+voice = ["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"]
+rate = "-20%"
+text = "Procedura wybudzania zakończona. Witamy z powrotem, załogo."
+```
+
 ### Choosing a voice
 
 edge-tts has two native Polish voices (`pl-PL-ZofiaNeural`, `pl-PL-MarekNeural`). The

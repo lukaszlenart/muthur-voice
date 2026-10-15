@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from golden.harness import SCENARIOS, golden_path, requires_menlo, run_scenario
+from golden.harness import SCENARIOS, golden_path, require_raqm, requires_menlo, run_scenario
 from muthur.cli import main
 
 pytestmark = [pytest.mark.golden, requires_menlo]
@@ -10,6 +10,7 @@ pytestmark = [pytest.mark.golden, requires_menlo]
 
 @pytest.mark.parametrize("name", SCENARIOS)
 def test_render_matches_prototype(name, tmp_path):
+    require_raqm()
     expected = json.loads(golden_path(name).read_text(encoding="utf-8"))
     actual = run_scenario(name, lambda args: main(["render", *args]), tmp_path)
     assert actual["cmd"] == expected["cmd"]

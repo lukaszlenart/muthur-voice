@@ -28,6 +28,8 @@ hashes recorded from that prototype.
   read Polish. Listening for #2 (2026-10-14) settled the defaults: Zofia at `--rate=-20% --pitch=-24Hz`
   through `--voice-fx intercom`, the best so far but not ideal. The fallback is ElevenLabs via `--audio`.
 - Rendering runs at roughly 2.5× real time (pure Pillow per frame).
+- Text is laid out by Pillow's Raqm engine, which needs Homebrew's `fribidi` at runtime; without it
+  Pillow silently falls back to BASIC layout and every golden frame differs (found in CI for #8).
 
 - Dependencies resolve with `[tool.uv] exclude-newer` because the user's safe-chain guard blocks
   very new releases. Bypass it (`--safe-chain-skip-minimum-package-age`) only with the user's

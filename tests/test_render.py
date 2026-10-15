@@ -4,7 +4,7 @@ import json
 import pytest
 from PIL import Image, ImageDraw
 
-from golden.harness import FIXTURES, golden_path, requires_menlo
+from golden.harness import FIXTURES, golden_path, require_raqm, requires_menlo
 from muthur.render import build_blocks, iter_frames, load_font, timeline
 from muthur.timing import estimate_cues
 
@@ -51,6 +51,7 @@ def test_timeline_adds_lead_in_and_tail():
 @requires_menlo
 @pytest.mark.golden
 def test_preview_frames_match_prototype():
+    require_raqm()
     expected = json.loads(golden_path("preview").read_text(encoding="utf-8"))
     raw = (FIXTURES / "short.txt").read_text(encoding="utf-8").strip()
     total, frames = iter_frames(estimate_cues(raw), None, None, 54, True, "MU/TH/UR 6000 :: USCSS MONTERO")

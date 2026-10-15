@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest import mock
 
 import pytest
+from PIL import features
 
 GOLDEN = Path(__file__).resolve().parent
 FIXTURES = GOLDEN.parent / "fixtures"
@@ -17,6 +18,11 @@ SCENARIOS = {
 
 requires_menlo = pytest.mark.skipif(not os.path.exists("/System/Library/Fonts/Menlo.ttc"),
                                     reason="golden hashes were recorded with Menlo")
+
+
+def require_raqm():
+    if not features.check("raqm"):
+        pytest.fail("golden hashes need Raqm text layout; Pillow loads FriBiDi at runtime: brew install fribidi")
 
 
 class FakeFFmpeg:

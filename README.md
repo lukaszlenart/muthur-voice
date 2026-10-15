@@ -8,7 +8,7 @@ to the voice, CRT scanlines, phosphor glow, blinking cursor, low ship hum. Built
 ## Setup (macOS, fish)
 
 ```fish
-brew install ffmpeg uv
+brew install ffmpeg fribidi uv   # fribidi: Pillow's Raqm text layout, which the look depends on
 uv sync                    # add --extra align to align your own recordings with Whisper
 ```
 
@@ -63,8 +63,11 @@ uv run pytest tests/test_align.py::test_missing_middle_sentence_fills_the_gap -v
 ```
 
 The golden tests compare the SHA-256 of every rendered frame with hashes recorded from the
-original prototype. They need Menlo (macOS). After an intended visual change, check the new
+original prototype. They need Menlo (macOS) and Raqm text layout (`brew install fribidi`). After an intended visual change, check the new
 video by eye, then re-record with `uv run python tests/golden/record.py`.
+
+CI (`.github/workflows/test.yml`) runs the full suite, golden tests included, on macOS for every
+pull request and push to `main`.
 
 ## License
 

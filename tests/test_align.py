@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 import sys
 from types import ModuleType, SimpleNamespace
@@ -98,6 +99,7 @@ def test_align_cues_returns_none_when_whisper_unavailable(monkeypatch):
     assert align.align_cues(TEXT, "voice.mp3") is None
 
 
+@pytest.mark.skipif(not shutil.which("ffmpeg"), reason="needs ffmpeg")
 def test_faster_whisper_can_decode_audio(tmp_path):
     audio = pytest.importorskip("faster_whisper.audio")
     wav = tmp_path / "tone.wav"

@@ -113,6 +113,8 @@ def voices_command(a):
 def main(argv=None):
     parser = build_parser()
     a = parser.parse_args(argv)
-    if a.command == "render" and a.srt and not a.audio:
-        parser.error("--srt needs --audio")
+    if a.command == "render" and not a.audio:
+        for flag, used in [("--srt", a.srt), ("--no-align", a.no_align)]:
+            if used:
+                parser.error(f"{flag} needs --audio")
     {"render": render_command, "voices": voices_command}[a.command](a)

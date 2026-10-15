@@ -85,6 +85,16 @@ def test_render_rejects_unknown_voice_fx(capsys):
         cli.build_parser().parse_args(["render", "intro.txt", "--voice-fx", "reverb"])
 
 
+def test_srt_without_audio_is_rejected_before_tts(script, monkeypatch, capsys):
+    def boom(*a, **k):
+        raise AssertionError("edge-tts must not run when --srt is rejected")
+    monkeypatch.setattr(cli.narration, "run_tts", boom)
+    with pytest.raises(SystemExit) as e:
+        cli.main(["render", str(script), "--srt", "intro_napisy.srt"])
+    assert e.value.code == 2
+    assert "--srt needs --audio" in capsys.readouterr().err
+
+
 def test_own_audio_without_whisper_estimates_timing(script, tmp_path, monkeypatch, rendered):
     monkeypatch.setattr(cli.align, "align_cues", lambda *a: None)
     cli.main(["render", str(script), "--audio", "voice.mp3"])

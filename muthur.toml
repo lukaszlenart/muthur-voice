@@ -1,0 +1,16 @@
+[render]
+voice = "pl-PL-ZofiaNeural"
+rate = "-15%"
+pitch = "-18Hz"
+voice_fx = "old-intercom"
+title = "MU/TH/UR"
+image = "examples/orbit/background.jpg"
+whisper_model = "medium"
+wrap = 54
+hum = true
+upper = true
+
+[voices]
+voice = ["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"]
+rate = "-10%"
+text = "Procedura wybudzania zakończona. Witamy z powrotem!"

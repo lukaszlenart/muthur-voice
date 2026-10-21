@@ -17,6 +17,8 @@ hashes recorded from that prototype.
 
 - **Polish first.** Narration and on-screen text are Polish; every text path (fonts, upper-casing,
   wrapping, Whisper word matching) must handle ą ć ę ł ń ó ś ź ż. English should also work.
+- **macOS first, Linux and Windows supported.** Users install with `uv tool install` from the GitHub zip
+  (see README); CI checks Linux and Windows without golden tests, since those need Menlo.
 - **fish shell.** Docs and scripts must not assume bash. System pip is blocked (PEP 668, Homebrew
   Python 3.14), so everything runs from the project venv.
 - **No spoilers.** Intro texts are shown to players; don't add scenario details to them.
@@ -59,7 +61,7 @@ without touching `config.py`.
 Everything converges on **cues**: mutable `[start_sec, end_sec, sentence]` lists relative to the
 start of the audio. `cli.render_command` picks the source:
 
-- edge-tts → `narration.run_tts` → SRT → `timing.parse_srt` (merges mid-sentence cues)
+- edge-tts (run as `python -m edge_tts`: `uv tool install` puts only `muthur` on PATH) → `narration.run_tts` → SRT → `timing.parse_srt` (merges mid-sentence cues)
 - `--audio` → `align.align_cues` = `transcribe` (faster-whisper, Polish, script as prompt) +
   `match_cues` (pure difflib match; missing sentences interpolated by length, then forced monotonic)
 - `--srt` → `timing.parse_srt`; `--no-tts` or no Whisper → `timing.estimate_cues`
@@ -72,4 +74,4 @@ and alignment. All file text goes through `text.read_text` (BOM dropped, NFC).
 together. `mux.encode` pipes the frames into ffmpeg's stdin. Rendering runs at about 2.5× real time.
 
 `narration.audition` (behind `muthur voices`) synthesises one sentence per voice and plays it with
-`afplay`.
+`afplay`, or `ffplay` off macOS.

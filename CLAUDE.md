@@ -73,5 +73,10 @@ and alignment. All file text goes through `text.read_text` (BOM dropped, NFC).
 `mux.ffmpeg_command` delays the voice by the same `LEAD_IN` (`adelay`), so the two must change
 together. `mux.encode` pipes the frames into ffmpeg's stdin. Rendering runs at about 2.5× real time.
 
+`cli.main` starts `update.start` (a daemon thread asking GitHub for the latest release, cached
+for a day in the user cache folder) before the command and prints `update.report` after it.
+The notice compares against the `version` in `pyproject.toml`, so every release bumps it and
+gets a matching `vX.Y.Z` GitHub release (`gh release create vX.Y.Z --generate-notes`).
+
 `narration.audition` (behind `muthur voices`) synthesises one sentence per voice and plays it with
 `afplay`, or `ffplay` off macOS.

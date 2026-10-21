@@ -7,7 +7,7 @@ from muthur.timing import parse_srt
 
 
 def edge_tts_cmd(voice, rate, mp3, *, pitch=None, file=None, text=None, srt=None):
-    cmd = ["edge-tts", "--voice", voice, f"--rate={rate}"]
+    cmd = [sys.executable, "-m", "edge_tts", "--voice", voice, f"--rate={rate}"]
     if pitch:
         cmd.append(f"--pitch={pitch}")
     cmd += ["--file", file] if file else [f"--text={text}"]
@@ -17,13 +17,7 @@ def edge_tts_cmd(voice, rate, mp3, *, pitch=None, file=None, text=None, srt=None
     return cmd
 
 
-def require_edge_tts():
-    if not shutil.which("edge-tts"):
-        sys.exit("edge-tts not found: run `uv sync`")
-
-
 def run_tts(text, voice, rate, workdir, pitch=None):
-    require_edge_tts()
     script = os.path.join(workdir, "script.txt")
     with open(script, "w", encoding="utf-8") as f:
         f.write(text)
@@ -45,15 +39,15 @@ SAMPLE = "Procedura wybudzania zakończona. Witamy z powrotem, załogo."
 
 
 def synthesize(voice, rate, text, mp3, pitch=None):
-    require_edge_tts()
     return subprocess.run(edge_tts_cmd(voice, rate, mp3, pitch=pitch, text=text)).returncode == 0
 
 
 def find_player():
-    afplay = shutil.which("afplay")
-    if not afplay:
-        return None
-    return lambda mp3: subprocess.run([afplay, mp3])
+    if afplay := shutil.which("afplay"):
+        return lambda mp3: subprocess.run([afplay, mp3])
+    if ffplay := shutil.which("ffplay"):
+        return lambda mp3: subprocess.run([ffplay, "-nodisp", "-autoexit", "-loglevel", "error", mp3])
+    return None
 
 
 def audition(voices, text, rate, outdir, synth=synthesize, player=None, pitch=None, fx=None):

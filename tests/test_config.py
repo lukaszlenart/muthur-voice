@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from muthur import cli
@@ -106,8 +108,9 @@ def test_relative_paths_resolve_against_the_config_folder(workdir, monkeypatch):
 
 
 def test_absolute_paths_stay_as_they_are(toml):
-    toml('[render]\nimage = "/obrazy/montero.jpg"\n')
-    assert cli.parse_args(["render", "intro.txt"]).image == "/obrazy/montero.jpg"
+    image = os.path.abspath(os.path.join(os.sep, "obrazy", "montero.jpg"))
+    toml(f"[render]\nimage = '{image}'\n")
+    assert cli.parse_args(["render", "intro.txt"]).image == image
 
 
 def test_cli_paths_stay_relative_to_the_current_directory(toml):

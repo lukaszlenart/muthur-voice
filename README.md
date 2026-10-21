@@ -5,25 +5,50 @@ as the MU/TH/UR ship computer from the Alien films: green monospace terminal, ty
 to the voice, CRT scanlines, phosphor glow, blinking cursor, low ship hum. Built for Alien RPG
 (OBCY) sessions, for example an intro where Mother wakes the crew from hypersleep. Polish first.
 
-## Setup (macOS, fish)
+## Install
+
+macOS ([Homebrew](https://brew.sh)):
 
 ```fish
 brew install ffmpeg fribidi uv   # fribidi: Pillow's Raqm text layout, which the look depends on
-uv sync                    # add --extra align to align your own recordings with Whisper
+uv tool install "muthur-voice @ https://github.com/lukaszlenart/muthur-voice/archive/refs/heads/main.zip"
 ```
+
+Linux (Debian/Ubuntu):
+
+```sh
+sudo apt install ffmpeg libfribidi0 fonts-dejavu-core
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install "muthur-voice @ https://github.com/lukaszlenart/muthur-voice/archive/refs/heads/main.zip"
+```
+
+Windows (PowerShell; open a new terminal after `winget` so the new commands are on PATH):
+
+```powershell
+winget install astral-sh.uv
+winget install Gyan.FFmpeg
+uv tool install "muthur-voice @ https://github.com/lukaszlenart/muthur-voice/archive/refs/heads/main.zip"
+```
+
+`uv` fetches a matching Python if needed. To align your own recordings with Whisper (`--audio`),
+install `"muthur-voice[align] @ ..."` instead; it downloads a few hundred MB more. Update with
+`uv tool upgrade muthur-voice`, remove with `uv tool uninstall muthur-voice`.
+
+The look was tuned on macOS with Menlo. Linux uses DejaVu Sans Mono and Windows uses Consolas
+(pass `--font` for another), and without FriBiDi (usual on Windows) Pillow lays text out more simply.
 
 The output is a 1080p H.264 MP4 that plays from a USB stick on any TV.
 
 ## Usage
 
 ```fish
-uv run muthur render intro.txt                          # Polish edge-tts narration -> intro.mp4
-uv run muthur render intro.txt --pitch=+0Hz --voice-fx echo   # natural pitch, lighter echo
-uv run muthur render intro.txt --no-tts                 # silent preview, estimated timing
-uv run muthur render intro.txt --image examples/orbit/background.jpg   # darkened, green-tinted image behind the text
-uv run muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
-uv run muthur render intro.txt --audio lektor.mp3       # own recording (e.g. ElevenLabs), Whisper aligns subtitles
-uv run muthur render intro.txt --audio lektor.mp3 --srt intro_napisy.srt   # after fixing timing by hand
+muthur render intro.txt                          # Polish edge-tts narration -> intro.mp4
+muthur render intro.txt --pitch=+0Hz --voice-fx echo   # natural pitch, lighter echo
+muthur render intro.txt --no-tts                 # silent preview, estimated timing
+muthur render intro.txt --image examples/orbit/background.jpg   # darkened, green-tinted image behind the text
+muthur render intro.txt --voice pl-PL-MarekNeural --rate=-15%
+muthur render intro.txt --audio lektor.mp3       # own recording (e.g. ElevenLabs), Whisper aligns subtitles
+muthur render intro.txt --audio lektor.mp3 --srt intro_napisy.srt   # after fixing timing by hand
 ```
 
 The default narration is `pl-PL-ZofiaNeural` at `--rate=-20% --pitch=-24Hz`, played through
@@ -42,10 +67,10 @@ Files written next to the video (`-o` changes the base name):
 ### Examples
 
 [`examples/`](examples/README.md) holds four ready intros, each with its own text, settings and
-background image:
+background image (in a clone, or the [zip](https://github.com/lukaszlenart/muthur-voice/archive/refs/heads/main.zip) the install uses):
 
 ```fish
-uv run muthur render examples/wake-up/intro.txt --config examples/wake-up/muthur.toml
+muthur render examples/wake-up/intro.txt --config examples/wake-up/muthur.toml
 ```
 
 ### Settings file
@@ -82,18 +107,21 @@ edge-tts has two native Polish voices (`pl-PL-ZofiaNeural`, `pl-PL-MarekNeural`)
 sentence in each default candidate, with the default rate, pitch and effect:
 
 ```fish
-uv run muthur voices
-uv run muthur voices --voice pl-PL-MarekNeural --voice de-DE-SeraphinaMultilingualNeural --rate=-15%
-uv run muthur voices --voice pl-PL-ZofiaNeural --pitch=-15Hz --voice-fx none
-uv run muthur voices --text "Dlaczego Matka was obudziła?" --keep audition
-uv run edge-tts --list-voices | grep -E 'pl-PL|Multilingual'    # all candidates
+muthur voices
+muthur voices --voice pl-PL-MarekNeural --voice de-DE-SeraphinaMultilingualNeural --rate=-15%
+muthur voices --voice pl-PL-ZofiaNeural --pitch=-15Hz --voice-fx none
+muthur voices --text "Dlaczego Matka was obudziła?" --keep audition
+uvx edge-tts --list-voices | grep -E 'pl-PL|Multilingual'    # all candidates
 ```
 
-Without `afplay` (Linux), samples are saved in `audition/` instead of played.
+Samples play with `afplay` (macOS) or `ffplay` (bundled with ffmpeg); without either they are saved
+in `audition/`.
 
 ## Development
 
 ```fish
+git clone https://github.com/lukaszlenart/muthur-voice; and cd muthur-voice
+uv sync --extra align                  # then prefix commands with `uv run`, e.g. `uv run muthur render intro.txt`
 uv run pytest                          # everything (golden tests take ~20 s)
 uv run pytest -m "not golden"          # fast loop
 uv run pytest tests/test_align.py::test_missing_middle_sentence_fills_the_gap -v
@@ -104,7 +132,8 @@ original prototype. They need Menlo (macOS) and Raqm text layout (`brew install 
 video by eye, then re-record with `uv run python tests/golden/record.py`.
 
 CI (`.github/workflows/test.yml`) runs the full suite, golden tests included, on macOS for every
-pull request and push to `main`.
+pull request and push to `main`, and the suite without golden tests plus a silent render on Linux
+and Windows.
 
 ## License
 

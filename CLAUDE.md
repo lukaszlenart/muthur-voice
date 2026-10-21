@@ -76,7 +76,8 @@ together. `mux.encode` pipes the frames into ffmpeg's stdin. Rendering runs at a
 `cli.main` starts `update.start` (a daemon thread asking GitHub for the latest release, cached
 for a day in the user cache folder) before the command and prints `update.report` after it.
 The notice compares against the `version` in `pyproject.toml`, so every release bumps it and
-gets a matching `vX.Y.Z` GitHub release (`gh release create vX.Y.Z --generate-notes`).
+gets a matching `vX.Y.Z` tag on `main`; pushing it runs `release.yml`, which checks the tag
+against `version`, reruns `test.yml` and publishes the release.
 
 `narration.audition` (behind `muthur voices`) synthesises one sentence per voice and plays it with
 `afplay`, or `ffplay` off macOS.

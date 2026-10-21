@@ -143,12 +143,16 @@ The golden tests compare the SHA-256 of every rendered frame with hashes recorde
 original prototype. They need Menlo (macOS) and Raqm text layout (`brew install fribidi`). After an intended visual change, check the new
 video by eye, then re-record with `uv run python tests/golden/record.py`.
 
-To release, bump `version` in `pyproject.toml`, merge, then tag it on `main`; installed copies
-start showing the update notice within a day:
+To release, bump `version` in `pyproject.toml`, merge, then tag `main`:
 
 ```fish
-gh release create v0.2.0 --target main --generate-notes
+git switch main; and git pull
+git tag v0.2.0; and git push origin v0.2.0
 ```
+
+The tag starts `.github/workflows/release.yml`: it checks the tag matches `version` and points at
+`main`, runs the full test suite, then publishes a GitHub release with notes generated from the
+merged PRs. Installed copies start showing the update notice within a day.
 
 The check is off in a clone (editable install), in CI, and with `MUTHUR_NO_UPDATE_CHECK=1`.
 

@@ -31,8 +31,20 @@ uv tool install "muthur-voice @ https://github.com/lukaszlenart/muthur-voice/arc
 ```
 
 `uv` fetches a matching Python if needed. To align your own recordings with Whisper (`--audio`),
-install `"muthur-voice[align] @ ..."` instead; it downloads a few hundred MB more. Update with
-`uv tool upgrade muthur-voice`, remove with `uv tool uninstall muthur-voice`.
+install `"muthur-voice[align] @ ..."` instead; it downloads a few hundred MB more. Remove with
+`uv tool uninstall muthur-voice`.
+
+### Updates
+
+`muthur` checks the [latest release](https://github.com/lukaszlenart/muthur-voice/releases) at most
+once a day and, when there is a newer one, prints after the render:
+
+```
+  MU/TH/UR 0.2.0 is available (you have 0.1.0): uv tool upgrade muthur-voice
+```
+
+`muthur --version` shows what you have. Set `MUTHUR_NO_UPDATE_CHECK=1` to turn the check off. To
+hear about releases by email instead, use *Watch → Custom → Releases* on GitHub.
 
 The look was tuned on macOS with Menlo. Linux uses DejaVu Sans Mono and Windows uses Consolas
 (pass `--font` for another), and without FriBiDi (usual on Windows) Pillow lays text out more simply.
@@ -130,6 +142,15 @@ uv run pytest tests/test_align.py::test_missing_middle_sentence_fills_the_gap -v
 The golden tests compare the SHA-256 of every rendered frame with hashes recorded from the
 original prototype. They need Menlo (macOS) and Raqm text layout (`brew install fribidi`). After an intended visual change, check the new
 video by eye, then re-record with `uv run python tests/golden/record.py`.
+
+To release, bump `version` in `pyproject.toml`, merge, then tag it on `main`; installed copies
+start showing the update notice within a day:
+
+```fish
+gh release create v0.2.0 --target main --generate-notes
+```
+
+The check is off in a clone (editable install), in CI, and with `MUTHUR_NO_UPDATE_CHECK=1`.
 
 CI (`.github/workflows/test.yml`) runs the full suite, golden tests included, on macOS for every
 pull request and push to `main`, and the suite without golden tests plus a silent render on Linux

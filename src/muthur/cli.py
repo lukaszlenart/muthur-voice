@@ -15,7 +15,7 @@ import shutil
 import sys
 import tempfile
 
-from muthur import align, config, mux, narration, render, timing
+from muthur import align, config, mux, narration, render, timing, update
 from muthur.text import read_text
 
 VOICE = "pl-PL-ZofiaNeural"
@@ -27,6 +27,7 @@ VOICE_FX = "intercom"
 def build_parser():
     ap = argparse.ArgumentParser(prog="muthur", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--version", action="version", version=f"%(prog)s {update.installed_version()}")
     sub = ap.add_subparsers(dest="command", required=True)
 
     r = sub.add_parser("render", help="text file -> MU/TH/UR video")
@@ -157,4 +158,6 @@ def parse_args(argv=None, check_files=False):
 
 def main(argv=None):
     a = parse_args(argv, check_files=True)
+    pending = update.start()
     {"render": render_command, "voices": voices_command}[a.command](a)
+    update.report(pending)

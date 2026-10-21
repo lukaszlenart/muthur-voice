@@ -67,10 +67,10 @@ def latest(path, now, fetch=fetch_latest):
 
 
 def parse(version):
-    try:
-        return tuple(int(part) for part in version.split("."))
-    except (AttributeError, ValueError):
+    parts = version.split(".") if isinstance(version, str) else []
+    if not parts or not all(part.isascii() and part.isdigit() for part in parts):
         return None
+    return tuple(map(int, parts))
 
 
 def notice(current, newest):

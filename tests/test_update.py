@@ -14,7 +14,7 @@ def test_notice_names_the_new_version_and_the_upgrade_command():
         "MU/TH/UR 0.2.0 is available (you have 0.1.0): uv tool upgrade muthur-voice")
 
 
-@pytest.mark.parametrize("newest", ["0.1.0", "0.0.9", None, "0.2.0-rc1", "garbage"])
+@pytest.mark.parametrize("newest", ["0.1.0", "0.0.9", None, "0.2.0-rc1", "garbage", "0.2.0\n", " 0.2.0", "", 2])
 def test_no_notice_unless_the_release_is_newer(newest):
     assert update.notice("0.1.0", newest) is None
 

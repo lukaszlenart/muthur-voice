@@ -1,22 +1,27 @@
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 from muthur import narration
 
+EDGE_TTS = [sys.executable, "-m", "edge_tts"]
+
 
 def test_edge_tts_cmd_for_a_file_matches_prototype():
-    assert narration.edge_tts_cmd("pl-PL-ZofiaNeural", "-10%", "n.mp3", file="intro.txt", srt="n.srt") == [
-        "edge-tts", "--voice", "pl-PL-ZofiaNeural", "--rate=-10%", "--file", "intro.txt",
+    assert narration.edge_tts_cmd("pl-PL-ZofiaNeural", "-10%", "n.mp3", file="intro.txt", srt="n.srt") == EDGE_TTS + [
+        "--voice", "pl-PL-ZofiaNeural", "--rate=-10%", "--file", "intro.txt",
         "--write-media", "n.mp3", "--write-subtitles", "n.srt"]
 
 
 def test_edge_tts_cmd_for_inline_text_survives_leading_dash():
-    assert narration.edge_tts_cmd("pl-PL-MarekNeural", "+0%", "s.mp3", text="-- Raport.") == [
-        "edge-tts", "--voice", "pl-PL-MarekNeural", "--rate=+0%", "--text=-- Raport.", "--write-media", "s.mp3"]
+    assert narration.edge_tts_cmd("pl-PL-MarekNeural", "+0%", "s.mp3", text="-- Raport.") == EDGE_TTS + [
+        "--voice", "pl-PL-MarekNeural", "--rate=+0%", "--text=-- Raport.", "--write-media", "s.mp3"]
 
 
 def test_edge_tts_cmd_puts_pitch_after_rate():
-    assert narration.edge_tts_cmd("pl-PL-ZofiaNeural", "-15%", "s.mp3", pitch="-8Hz", text="Raport.") == [
-        "edge-tts", "--voice", "pl-PL-ZofiaNeural", "--rate=-15%", "--pitch=-8Hz", "--text=Raport.",
+    assert narration.edge_tts_cmd("pl-PL-ZofiaNeural", "-15%", "s.mp3", pitch="-8Hz", text="Raport.") == EDGE_TTS + [
+        "--voice", "pl-PL-ZofiaNeural", "--rate=-15%", "--pitch=-8Hz", "--text=Raport.",
         "--write-media", "s.mp3"]
 
 
@@ -34,7 +39,6 @@ def test_run_tts_passes_pitch(tmp_path, monkeypatch):
 
 def test_synthesize_passes_pitch(tmp_path, monkeypatch):
     seen = []
-    monkeypatch.setattr(narration.shutil, "which", lambda name: "/usr/bin/edge-tts")
     monkeypatch.setattr(narration.subprocess, "run",
                         lambda cmd: seen.append(cmd) or narration.subprocess.CompletedProcess(cmd, 0))
     assert narration.synthesize("pl-PL-MarekNeural", "-15%", "Raport.", "s.mp3", pitch="-15Hz")
@@ -53,7 +57,7 @@ def test_run_tts_reads_the_given_text(tmp_path, monkeypatch):
 
     monkeypatch.setattr(narration.subprocess, "run", fake_run)
     mp3, cues = narration.run_tts("Kurs został skorygowany.", "pl-PL-ZofiaNeural", "-10%", str(tmp_path))
-    assert seen == [["edge-tts", "--voice", "pl-PL-ZofiaNeural", "--rate=-10%",
+    assert seen == [EDGE_TTS + ["--voice", "pl-PL-ZofiaNeural", "--rate=-10%",
                      "--file", str(tmp_path / "script.txt"),
                      "--write-media", str(tmp_path / "narration.mp3"),
                      "--write-subtitles", str(tmp_path / "narration.srt")],
@@ -114,9 +118,33 @@ def test_audition_falls_back_to_the_dry_sample_when_fx_fails(tmp_path):
     assert played == [str(tmp_path / "01_pl-PL-ZofiaNeural.mp3")]
 
 
-def test_find_player_is_none_without_afplay(monkeypatch):
-    monkeypatch.setattr(narration.shutil, "which", lambda name: None)
-    assert narration.find_player() is None
+def test_edge_tts_runs_from_the_installed_package_without_path(tmp_path):
+    cmd = narration.edge_tts_cmd("pl-PL-ZofiaNeural", "+0%", "s.mp3", text="Raport.")[:3] + ["--help"]
+    assert subprocess.run(cmd, env={**os.environ, "PATH": str(tmp_path)}, capture_output=True).returncode == 0
+
+
+def _player_cmd(monkeypatch, installed):
+    seen = []
+    monkeypatch.setattr(narration.shutil, "which", lambda name: f"/bin/{name}" if name in installed else None)
+    monkeypatch.setattr(narration.subprocess, "run", seen.append)
+    player = narration.find_player()
+    if player is None:
+        return None
+    player("s.mp3")
+    return seen[0]
+
+
+def test_find_player_prefers_afplay(monkeypatch):
+    assert _player_cmd(monkeypatch, {"afplay", "ffplay"}) == ["/bin/afplay", "s.mp3"]
+
+
+def test_find_player_falls_back_to_ffplay(monkeypatch):
+    assert _player_cmd(monkeypatch, {"ffplay"}) == [
+        "/bin/ffplay", "-nodisp", "-autoexit", "-loglevel", "error", "s.mp3"]
+
+
+def test_find_player_is_none_without_a_player(monkeypatch):
+    assert _player_cmd(monkeypatch, set()) is None
 
 
 def test_default_voices_start_with_native_polish():

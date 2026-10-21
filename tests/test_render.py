@@ -5,6 +5,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from golden.harness import FIXTURES, golden_path, require_raqm, requires_menlo
+from muthur import render
 from muthur.render import build_blocks, iter_frames, load_font, timeline
 from muthur.timing import estimate_cues
 
@@ -37,6 +38,13 @@ def test_default_font_draws_polish_diacritics(ch, base):
     font = load_font(46)
     assert _glyph(font, ch) != _glyph(font, "\u0378")  # unassigned code point -> missing-glyph box
     assert _glyph(font, ch) != _glyph(font, base)
+
+
+@pytest.mark.parametrize("font", ["C:/Windows/Fonts/consola.ttf", "C:/Windows/Fonts/cour.ttf"])
+def test_finds_a_windows_monospace_font(monkeypatch, font):
+    monkeypatch.setattr(render.os.path, "exists", lambda p: p == font)
+    monkeypatch.setattr(render.ImageFont, "truetype", lambda p, size: (p, size))
+    assert load_font(46) == (font, 46)
 
 
 def test_missing_font_path_falls_back_to_system_font():

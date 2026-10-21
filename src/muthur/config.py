@@ -54,7 +54,7 @@ def defaults(parser, section, values, path):
         if action.choices is not None and value not in action.choices:
             sys.exit(f"{where} must be one of: {', '.join(action.choices)}")
         if key in PATH_KEYS:
-            value = os.path.join(base, os.path.expanduser(value))
+            value = os.path.normpath(os.path.join(base, os.path.expanduser(value)))
         out[key] = value
     return out
 

@@ -21,7 +21,7 @@ from muthur.text import read_text
 VOICE = "pl-PL-ZofiaNeural"
 RATE = "-20%"
 PITCH = "-24Hz"
-VOICE_FX = "intercom"
+VOICE_FX = "old-intercom"
 
 
 def build_parser():
@@ -39,7 +39,7 @@ def build_parser():
     r.add_argument("--rate", default=RATE, help="speech rate (default %(default)s), e.g. --rate=-15%%")
     r.add_argument("--pitch", default=PITCH, help="voice pitch (default %(default)s), e.g. --pitch=+0Hz")
     r.add_argument("--voice-fx", choices=mux.VOICE_FX, default=VOICE_FX,
-                   help="effect on the narration: intercom (ship's speaker, default), echo, none")
+                   help="effect on the narration: old-intercom (1979-style PA, default), intercom, echo, none")
     r.add_argument("--audio", help="use your own narration (e.g. from ElevenLabs) instead of edge-tts")
     r.add_argument("--srt", help="subtitles matching --audio (skips auto-alignment)")
     r.add_argument("--whisper-model", default="medium",
@@ -77,7 +77,7 @@ def build_parser():
     v.add_argument("--rate", default=RATE, help="speech rate (default %(default)s), e.g. --rate=-15%%")
     v.add_argument("--pitch", default=PITCH, help="voice pitch (default %(default)s), e.g. --pitch=+0Hz")
     v.add_argument("--voice-fx", choices=mux.VOICE_FX, default=VOICE_FX,
-                   help="play the samples through an effect: intercom (default), echo, none")
+                   help="play the samples through an effect: old-intercom (default), intercom, echo, none")
     v.add_argument("--keep", metavar="DIR", help="save the samples in DIR")
     v.add_argument("--play", action=argparse.BooleanOptionalAction, default=True,
                    help="--no-play only saves the samples")

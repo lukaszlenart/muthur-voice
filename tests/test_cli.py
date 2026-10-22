@@ -76,7 +76,7 @@ def test_tts_mode_saves_narration_next_to_video(script, monkeypatch, rendered):
     cues, _audio, out, image, font, wrap, upper, hum, title, fx = rendered[0]
     assert cues == [[0.0, 1.0, "Raport systemowy."]]
     assert out == str(script.parent / "intro.mp4")
-    assert (image, font, wrap, upper, hum, fx) == (None, None, 54, True, True, "intercom")
+    assert (image, font, wrap, upper, hum, fx) == (None, None, 54, True, True, "old-intercom")
 
 
 def test_own_audio_alignment_writes_editable_srt(script, tmp_path, monkeypatch, rendered, voice):
@@ -214,7 +214,7 @@ def test_voices_default_to_the_render_voice_fx(monkeypatch, auditioned):
     monkeypatch.setattr(cli.mux, "apply_fx", lambda src, dst, fx: applied.append(fx) or True)
     cli.main(["voices"])
     auditioned[0]["fx"]("a.mp3", "a_fx.mp3")
-    assert applied == ["intercom"]
+    assert applied == ["old-intercom"]
 
 
 def test_voices_runs_samples_through_the_chosen_fx(monkeypatch, auditioned):

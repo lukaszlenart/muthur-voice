@@ -28,7 +28,8 @@ hashes recorded from that prototype.
 - TTS mispronounces tokens like "MU/TH/UR"; there is no spoken-vs-displayed text override yet.
 - edge-tts has only two native Polish voices (Zofia, Marek); `*MultilingualNeural` voices can also
   read Polish. Listening for #2 (2026-10-14) settled the defaults: Zofia at `--rate=-20% --pitch=-24Hz`
-  through `--voice-fx intercom`, the best so far but not ideal. The fallback is ElevenLabs via `--audio`.
+  through `--voice-fx intercom`, the best so far but not ideal. On 2026-10-22 the user switched the
+  default effect to `old-intercom`. The fallback is ElevenLabs via `--audio`.
 - Rendering runs at roughly 2.5× real time (pure Pillow per frame).
 - Text is laid out by Pillow's Raqm engine, which needs Homebrew's `fribidi` at runtime; without it
   Pillow silently falls back to BASIC layout and every golden frame differs (found in CI for #8).

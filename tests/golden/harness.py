@@ -14,7 +14,7 @@ SCENARIOS = {
     "preview": ["<FIX>/short.txt", "--no-tts", "-o", "<TMP>/out.mp4"],
     "own_audio": ["<FIX>/short.txt", "--audio", "<FIX>/voice.mp3", "--srt", "<FIX>/short.srt",
                   "--image", "<FIX>/bg.png", "--no-hum", "--no-upper", "--wrap", "30",
-                  "--title", "MU/TH/UR :: ŁĄCZNOŚĆ", "-o", "<TMP>/out.mp4"],
+                  "--title", "MU/TH/UR :: ŁĄCZNOŚĆ", "--voice-fx", "intercom", "-o", "<TMP>/out.mp4"],
 }
 
 requires_menlo = pytest.mark.skipif(not os.path.exists("/System/Library/Fonts/Menlo.ttc"),

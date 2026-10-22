@@ -76,6 +76,41 @@ Files written next to the video (`-o` changes the base name):
 | `--audio` with Whisper | `intro.mp4`, `intro_napisy.srt` (edit it, then pass it back with `--srt`) |
 | `--no-tts`, `--audio --srt` | `intro.mp4` |
 
+### Boot sequence
+
+An optional block at the top of the text file plays a MU/TH/UR boot screen before the narration:
+no voice, just typing clicks over the ship hum, with the same header and background as the rest.
+
+```text
+[BOOT start]
+WZNAWIANIE SYSTEMÓW POKŁADOWYCH
+[ProgressBar: 1..100, label: %, text: ROZRUCH REAKTORA]
+[Status: AKTYWNE, text: Podtrzymywanie życia]
+[Status: włączone, text: OŚWIETLENIE]
+[ProgressValue: -10..21, label: °C, text: TEMPERATURA POKŁADU]
+[Status: ZDATNA DO ODDYCHANIA, text: ATMOSFERA]
+INICJACJA SEKWENCJI WYBUDZANIA ZAŁOGI
+[BOOT end]
+Raport systemowy. ...the narrated intro...
+```
+
+| Line | On screen |
+|---|---|
+| plain text | typed letter by letter |
+| `[ProgressBar: A..B, label: %, text: ...]` | the text, then a bar filling while the number counts from A to B |
+| `[Status: VALUE, text: ...]` | the text and dots, a pause, then the value |
+| `[ProgressValue: A..B, label: °C, text: ...]` | the text and dots, then a number counting from A to B |
+
+`[CRT start]` / `[CRT end]` work too, and tag names ignore case. Status and ProgressValue values
+line up in one column. Text follows `--upper`; the `label` is shown exactly as typed. A line wider
+than `--wrap` is an error. The pace is set with `--boot-type-speed` (letters per second, default
+22), `--boot-status-pause` (0.7 s), `--boot-bar-time` (1.5 s), `--boot-count-time` (2 s) and
+`--boot-hold` (2 s after the last line); `--no-boot-clicks` silences the typing.
+
+```fish
+muthur render intro.txt --no-tts --boot-hold 3
+```
+
 ### Examples
 
 [`examples/`](examples/README.md) holds four ready intros, each with its own text, settings and
@@ -90,7 +125,7 @@ muthur render examples/wake-up/intro.txt --config examples/wake-up/muthur.toml
 Instead of repeating flags each session, put them in `muthur.toml` in the current directory (or
 pass `--config FILE`). A flag beats the file, and the file beats the built-in default. Keys are the
 long flag names with `_` for `-`; `--no-*` flags become booleans (`hum`, `upper`, `tts`, `align`,
-`play`), each also available as a positive flag (`--hum`) to undo a `false` from the file. Paths
+`play`, `boot_clicks`), each also available as a positive flag (`--hum`) to undo a `false` from the file. Paths
 (`image`, `audio`, `srt`, `font`, `out`, `keep`) are relative to the file. An unknown key is an error.
 
 ```toml
@@ -105,6 +140,8 @@ whisper_model = "medium"
 wrap = 54
 hum = true
 upper = true
+boot_type_speed = 22
+boot_hold = 2.5
 
 [voices]
 voice = ["pl-PL-ZofiaNeural", "pl-PL-MarekNeural"]

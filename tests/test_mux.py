@@ -1,8 +1,11 @@
+import array
+import wave
+
 import pytest
 
 from golden.harness import FakeFFmpeg
 from muthur import mux
-from muthur.mux import encode, ffmpeg_command
+from muthur.mux import encode, ffmpeg_command, write_clicks
 
 VIDEO_IN = ["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24",
             "-s", "1920x1080", "-r", "25", "-i", "-"]
@@ -95,3 +98,31 @@ def test_encode_exits_when_ffmpeg_fails(monkeypatch):
     monkeypatch.setattr("subprocess.Popen", failing)
     with pytest.raises(SystemExit, match="ffmpeg failed"):
         encode([(0.0, b"a")], 0.04, ["ffmpeg"], "o.mp4")
+
+
+def test_voice_delay_follows_the_boot():
+    cmd = ffmpeg_command(6.0, "voice.mp3", False, "o.mp4", fx="none", delay=9.5)
+    assert "[1:a]adelay=9500|9500[v];[v]anull[a]" in cmd
+
+
+def test_clicks_are_mixed_with_voice_and_hum():
+    cmd = ffmpeg_command(10.43, "voice.mp3", True, "o.mp4", clicks="clicks.wav")
+    graph = cmd[cmd.index("-filter_complex") + 1]
+    assert cmd[cmd.index("clicks.wav") - 1] == "-i"
+    assert graph.endswith("[3:a]anull[c];[v][h][c]amix=inputs=3:duration=longest:normalize=0[a]")
+
+
+def test_clicks_alone_still_produce_an_audio_track():
+    cmd = ffmpeg_command(5.0, None, False, "o.mp4", clicks="clicks.wav")
+    assert "[1:a]anull[c];[c]anull[a]" in cmd
+
+
+def test_click_track_has_the_video_length_and_sound_at_each_click(tmp_path):
+    path = tmp_path / "c.wav"
+    write_clicks([0.5], 2.0, str(path))
+    with wave.open(str(path)) as w:
+        assert (w.getframerate(), w.getnchannels(), w.getsampwidth()) == (44100, 1, 2)
+        assert w.getnframes() == 88200
+        samples = array.array("h", w.readframes(w.getnframes()))
+    assert max(map(abs, samples[:22050])) == 0
+    assert max(map(abs, samples[22050:22050 + 441])) > 1000

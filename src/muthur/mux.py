@@ -1,5 +1,8 @@
+import array
+import random
 import subprocess
 import sys
+import wave
 
 from muthur.render import FPS, H, LEAD_IN, W
 
@@ -17,7 +20,26 @@ def apply_fx(src, dst, fx):
     return subprocess.run(cmd).returncode == 0
 
 
-def ffmpeg_command(total, audio, hum, out, fx="echo"):
+RATE = 44100
+CLICK = 0.006
+
+
+def write_clicks(times, total, path):
+    samples = array.array("h", bytes(2 * int(total * RATE)))
+    rnd = random.Random(7)
+    length = int(CLICK * RATE)
+    for t in times:
+        start, peak = int(t * RATE), rnd.uniform(0.6, 1.0) * 12000
+        for i in range(min(length, len(samples) - start)):
+            samples[start + i] = int(peak * (1 - i / length) ** 2 * rnd.uniform(-1, 1))
+    with wave.open(path, "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(RATE)
+        w.writeframes(samples.tobytes())
+
+
+def ffmpeg_command(total, audio, hum, out, fx="echo", delay=LEAD_IN, clicks=None):
     cmd = ["ffmpeg", "-y", "-loglevel", "error",
            "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-"]
     filters, maps = [], ["-map", "0:v"]
@@ -25,7 +47,7 @@ def ffmpeg_command(total, audio, hum, out, fx="echo"):
     mix = []
     if audio:
         cmd += ["-i", audio]
-        ms = int(LEAD_IN * 1000)
+        ms = int(delay * 1000)
         chain = f",{VOICE_FX[fx]}" if VOICE_FX[fx] else ""
         filters.append(f"[{inputs}:a]adelay={ms}|{ms}{chain}[v]")
         mix.append("[v]")
@@ -35,6 +57,11 @@ def ffmpeg_command(total, audio, hum, out, fx="echo"):
         filters.append(f"[{inputs}:a]lowpass=f=180,volume=0.25,afade=t=in:d=2,"
                        f"afade=t=out:st={max(0, total - 2):.2f}:d=2[h]")
         mix.append("[h]")
+        inputs += 1
+    if clicks:
+        cmd += ["-i", clicks]
+        filters.append(f"[{inputs}:a]anull[c]")
+        mix.append("[c]")
         inputs += 1
     if mix:
         if len(mix) > 1:

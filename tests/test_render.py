@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw
 from golden.harness import FIXTURES, golden_path, require_raqm, requires_menlo
 from muthur import render
 from muthur.render import build_blocks, iter_frames, load_font, timeline
+from muthur.boot import Step, Timing, plan
 from muthur.timing import estimate_cues
 
 POLISH = "ąćęłńóśźżĄĆĘŁŃÓŚŹŻ"
@@ -64,3 +65,23 @@ def test_preview_frames_match_prototype():
     raw = (FIXTURES / "short.txt").read_text(encoding="utf-8").strip()
     total, frames = iter_frames(estimate_cues(raw), None, None, 54, True, "MU/TH/UR 6000 :: USCSS MONTERO")
     assert [hashlib.sha256(data).hexdigest() for _, data in frames] == expected["frames"]
+
+
+def test_timeline_offset_adds_to_the_lead_in():
+    shifted, total = timeline([[0.0, 1.0, "A."]], offset=5.0)
+    assert shifted == [[7.0, 8.0, "A."]] and total == pytest.approx(8.0 + render.TAIL)
+
+
+def test_boot_lengthens_the_video_by_its_duration():
+    cues = estimate_cues("Raport systemowy.")
+    boot = plan([Step("line", "WZNAWIANIE", 1)], Timing(), 54, True)
+    plain, _ = iter_frames(cues, None, None, 54, True, "T")
+    longer, _ = iter_frames(cues, None, None, 54, True, "T", boot=boot)
+    assert longer == pytest.approx(plain + boot.duration)
+
+
+@requires_menlo
+@pytest.mark.parametrize("ch", ["█", "░"])
+def test_default_font_draws_the_bar_glyphs(ch):
+    font = load_font(46)
+    assert _glyph(font, ch) != _glyph(font, "͸")

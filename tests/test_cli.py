@@ -21,7 +21,7 @@ def voice(tmp_path):
 @pytest.fixture
 def rendered(monkeypatch):
     calls = []
-    monkeypatch.setattr(cli, "render_video", lambda *args: calls.append(args))
+    monkeypatch.setattr(cli, "render_video", lambda *args, **kwargs: calls.append(args))
     return calls
 
 
@@ -255,3 +255,71 @@ def test_voices_fails_when_nothing_synthesised(tmp_path, monkeypatch):
     monkeypatch.setattr(cli.narration, "audition", lambda *a, **k: [])
     with pytest.raises(SystemExit, match="no voice"):
         cli.main(["voices", "--no-play"])
+
+
+BOOTED = "[BOOT start]\n[Status: AKTYWNE, text: ŻYCIE]\n[BOOT end]\nRaport systemowy.\n"
+
+
+def test_tts_gets_only_the_narrated_text(tmp_path, monkeypatch):
+    path = tmp_path / "intro.txt"
+    path.write_text(BOOTED, encoding="utf-8")
+    texts = []
+
+    def fake_tts(text, voice, rate, workdir, pitch=None):
+        texts.append(text)
+        mp3 = os.path.join(workdir, "narration.mp3")
+        open(mp3, "wb").close()
+        return mp3, [[0.0, 1.0, text]]
+
+    screens = []
+    monkeypatch.setattr(cli.narration, "run_tts", fake_tts)
+    monkeypatch.setattr(cli, "render_video", lambda *args, boot_screen, clicks: screens.append(boot_screen))
+    cli.main(["render", str(path)])
+    assert texts == ["Raport systemowy."]
+    assert screens[0].duration > 0
+
+
+def test_boot_shifts_voice_and_cues_by_the_same_amount(tmp_path, monkeypatch, voice):
+    path = tmp_path / "intro.txt"
+    path.write_text(BOOTED, encoding="utf-8")
+    (tmp_path / "s.srt").write_text("1\n00:00:00,000 --> 00:00:01,000\nRaport systemowy.\n", encoding="utf-8")
+    seen = {}
+
+    def fake_frames(cues, *args, boot=None):
+        seen["shift"] = boot.duration
+        return 10.0, iter(())
+
+    monkeypatch.setattr(cli.render, "iter_frames", fake_frames)
+    monkeypatch.setattr(cli.mux, "encode", lambda frames, total, cmd, out: seen.setdefault("cmd", cmd))
+    cli.main(["render", str(path), "--audio", voice, "--srt", "s.srt", "--no-boot-clicks"])
+    ms = int((seen["shift"] + cli.render.LEAD_IN) * 1000)
+    assert f"adelay={ms}|{ms}" in seen["cmd"][seen["cmd"].index("-filter_complex") + 1]
+
+
+def test_boot_flag_defaults():
+    a = cli.build_parser().parse_args(["render", "intro.txt"])
+    assert (a.boot_type_speed, a.boot_status_pause, a.boot_bar_time, a.boot_count_time, a.boot_hold,
+            a.boot_clicks) == (22.0, 0.7, 1.5, 2.0, 2.0, True)
+
+
+@pytest.mark.parametrize("args", [["--boot-type-speed", "0"], ["--boot-hold", "-1"]])
+def test_non_positive_type_speed_is_rejected(args, capsys):
+    with pytest.raises(SystemExit):
+        cli.parse_args(["render", "intro.txt", *args])
+    assert f"{args[0]} must be" in capsys.readouterr().err
+
+
+def test_boot_errors_count_leading_blank_lines(tmp_path, capsys):
+    path = tmp_path / "intro.txt"
+    path.write_bytes("﻿\r\n\r\n[BOOT start]\r\nA\r\n[ProgresBar: 1..2, text: R]\r\n[BOOT end]\r\nB.\r\n".encode())
+    with pytest.raises(SystemExit, match=r"^line 5: unknown tag ProgresBar"):
+        cli.main(["render", str(path), "--no-tts"])
+
+
+def test_boot_starts_typing_after_the_power_on_fade(tmp_path, monkeypatch):
+    path = tmp_path / "intro.txt"
+    path.write_text(BOOTED, encoding="utf-8")
+    screens = []
+    monkeypatch.setattr(cli, "render_video", lambda *args, boot_screen, clicks: screens.append(boot_screen))
+    cli.main(["render", str(path), "--no-tts"])
+    assert screens[0].clicks[0] == pytest.approx(cli.render.POWER_ON)

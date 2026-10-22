@@ -1,0 +1,6 @@
+# Boot screen before the narration: slightly faster typing, a longer hold on the last line.
+[render]
+title = "MU/TH/UR 6000 :: USCSS KESTREL"
+image = "background.jpg"
+boot_type_speed = 26
+boot_hold = 2.5

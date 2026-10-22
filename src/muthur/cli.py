@@ -95,9 +95,10 @@ def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title, fx
 
 def render_command(a):
     out = a.out or os.path.splitext(a.text)[0] + ".mp4"
-    steps, raw = boot.split_boot(read_text(a.text).strip())
+    steps, raw = boot.split_boot(read_text(a.text))
+    raw = raw.strip()
     pace = boot.Timing(a.boot_type_speed, a.boot_status_pause, a.boot_bar_time, a.boot_count_time,
-                          a.boot_hold)
+                          a.boot_hold, start=render.POWER_ON)
     boot_screen = boot.plan(steps, pace, a.wrap, a.upper) if steps else None
 
     with tempfile.TemporaryDirectory() as tmp:

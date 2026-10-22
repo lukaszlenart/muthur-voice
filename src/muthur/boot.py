@@ -106,6 +106,7 @@ class Timing:
     count_time: float = 2.0
     hold: float = 2.0
     gap: float = 0.25
+    start: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -138,7 +139,7 @@ def plan(steps, timing, wrap, upper):
     leaders = [len(case(s.text)) for s in steps if s.kind in ("status", "count")]
     col = max(leaders, default=0) + 5
     speed = timing.type_speed
-    clicks, segments, t = [], [], 0.0
+    clicks, segments, t = [], [], timing.start
 
     def lead(text):
         return f"{text} {'.' * (col - len(text) - 2)} "
@@ -186,5 +187,5 @@ def plan(steps, timing, wrap, upper):
             check(step, typed + fill(step, 0.0), typed + fill(step, 1.0))
             segments.append(Segment(t, end, show, typed + fill(step, 1.0)))
         t = end + timing.gap
-    duration = (t - timing.gap if steps else 0.0) + timing.hold
+    duration = (t - timing.gap if steps else timing.start) + timing.hold
     return Boot(segments, clicks, duration)

@@ -8,6 +8,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 W, H, FPS = 1920, 1080, 25
 LEAD_IN = 2.0      # seconds of "boot" before the voice starts
 TAIL = 3.0         # seconds after the voice ends
+POWER_ON = 0.6     # seconds of fade-in at the start
 GREEN = (120, 255, 140)
 DIM_GREEN = (60, 150, 75)
 
@@ -154,7 +155,7 @@ def _frames(total, blocks, bg, font, line_h, max_lines, boot=None):
         frame = ImageChops.add(frame, glow)            # phosphor glow
         frame = Image.composite(frame, black, scan)    # CRT scanlines
         flicker = 0.94 + 0.06 * rnd.random()
-        if t < 0.6:  # power-on fade
-            flicker *= t / 0.6
+        if t < POWER_ON:
+            flicker *= t / POWER_ON
         lut = [min(255, int(i * flicker)) for i in range(256)] * 3
         yield t, frame.point(lut).tobytes()

@@ -307,3 +307,19 @@ def test_non_positive_type_speed_is_rejected(args, capsys):
     with pytest.raises(SystemExit):
         cli.parse_args(["render", "intro.txt", *args])
     assert f"{args[0]} must be" in capsys.readouterr().err
+
+
+def test_boot_errors_count_leading_blank_lines(tmp_path, capsys):
+    path = tmp_path / "intro.txt"
+    path.write_bytes("﻿\r\n\r\n[BOOT start]\r\nA\r\n[ProgresBar: 1..2, text: R]\r\n[BOOT end]\r\nB.\r\n".encode())
+    with pytest.raises(SystemExit, match=r"^line 5: unknown tag ProgresBar"):
+        cli.main(["render", str(path), "--no-tts"])
+
+
+def test_boot_starts_typing_after_the_power_on_fade(tmp_path, monkeypatch):
+    path = tmp_path / "intro.txt"
+    path.write_text(BOOTED, encoding="utf-8")
+    screens = []
+    monkeypatch.setattr(cli, "render_video", lambda *args, boot_screen, clicks: screens.append(boot_screen))
+    cli.main(["render", str(path), "--no-tts"])
+    assert screens[0].clicks[0] == pytest.approx(cli.render.POWER_ON)

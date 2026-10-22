@@ -105,3 +105,10 @@ def test_upper_casing_skips_the_label():
 def test_line_wider_than_wrap_names_the_line():
     with pytest.raises(SystemExit, match=r"line 7: .*--wrap is 10"):
         plan([Step("status", "TEMPERATURA", 7, value="OK")], T, 10, False)
+
+
+def test_start_delays_the_whole_screen():
+    boot = plan([Step("line", "ab", 1)], Timing(type_speed=10, hold=2, gap=0, start=0.6), 54, False)
+    assert boot.lines_at(0.5) == []
+    assert boot.clicks == pytest.approx([0.6, 0.7])
+    assert boot.duration == pytest.approx(0.6 + 0.2 + 2)

@@ -4,7 +4,7 @@ Each folder is a ready intro: a Polish `intro.txt`, a `muthur.toml` and a `backg
 
 | Folder | Scene | Shows |
 |---|---|---|
-| `wake-up` | hibernation pods, crew wakes up | the defaults (Zofia through the intercom) |
+| `wake-up` | hibernation pods, crew wakes up | the defaults (Zofia through the old intercom) |
 | `corridor` | ship corridor, systems alert | Marek at `-15%`, `-10Hz` |
 | `orbit` | planet from orbit, arrival | `voice_fx = "echo"` |
 | `signal` | freighter silhouette, distress signal | `upper = false`, `wrap = 46` |

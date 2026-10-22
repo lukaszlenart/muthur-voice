@@ -64,8 +64,8 @@ muthur render intro.txt --audio lektor.mp3 --srt intro_napisy.srt   # after fixi
 ```
 
 The default narration is `pl-PL-ZofiaNeural` at `--rate=-20% --pitch=-24Hz`, played through
-`--voice-fx intercom` (a ship's speaker); `--voice-fx old-intercom` is a narrower, slightly
-distorted 1979-style PA. The effect also applies to `--audio`; pass
+`--voice-fx old-intercom`, a narrow, slightly distorted 1979-style PA; `--voice-fx intercom` is a
+cleaner ship's speaker. The effect also applies to `--audio`; pass
 `--voice-fx none` to keep your recording dry.
 
 Files written next to the video (`-o` changes the base name):
@@ -133,7 +133,7 @@ long flag names with `_` for `-`; `--no-*` flags become booleans (`hum`, `upper`
 voice = "pl-PL-ZofiaNeural"
 rate = "-20%"
 pitch = "-24Hz"
-voice_fx = "intercom"
+voice_fx = "old-intercom"
 title = "MU/TH/UR 6000 :: USCSS MONTERO"
 image = "examples/orbit/background.jpg"
 whisper_model = "medium"

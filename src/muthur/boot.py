@@ -91,3 +91,100 @@ def check_outside(lines, start):
     for i in range(start, len(lines)):
         if is_tag(lines[i].strip()):
             fail(i + 1, f"{lines[i].strip()} is outside the boot block, which must be at the top of the file")
+
+
+BAR_WIDTH = 15
+FILLED, EMPTY = "█", "░"
+EPS = 1e-9
+
+
+@dataclass(frozen=True)
+class Timing:
+    type_speed: float = 22.0
+    status_pause: float = 0.7
+    bar_time: float = 1.5
+    count_time: float = 2.0
+    hold: float = 2.0
+    gap: float = 0.25
+
+
+@dataclass(frozen=True)
+class Segment:
+    start: float
+    end: float
+    show: object
+    final: str
+
+
+def value_text(step, p):
+    return f"{round(step.start + (step.end - step.start) * p)}{step.label}"
+
+
+def bar_text(step, p):
+    n = round(BAR_WIDTH * p)
+    return FILLED * n + EMPTY * (BAR_WIDTH - n) + "  " + value_text(step, p)
+
+
+class Boot:
+    def __init__(self, segments, clicks, duration):
+        self.segments, self.clicks, self.duration = segments, clicks, duration
+
+    def lines_at(self, t):
+        return [s.final if t >= s.end else s.show(t) for s in self.segments if t >= s.start]
+
+
+def plan(steps, timing, wrap, upper):
+    case = str.upper if upper else str
+    leaders = [len(case(s.text)) for s in steps if s.kind in ("status", "count")]
+    col = max(leaders, default=0) + 5
+    speed = timing.type_speed
+    clicks, segments, t = [], [], 0.0
+
+    def lead(text):
+        return f"{text} {'.' * (col - len(text) - 2)} "
+
+    def typing(start, typed, after=lambda now, done: ""):
+        clicks.extend(start + i / speed for i, ch in enumerate(typed) if not ch.isspace())
+        done = start + len(typed) / speed
+
+        def show(t):
+            if t < done:
+                return typed[:int((t - start) * speed + EPS) + 1]
+            return typed + after(t, done)
+        return done, show
+
+    def check(step, *lines):
+        for line in lines:
+            if len(line) > wrap:
+                fail(step.line, f"{line!r} is {len(line)} characters, --wrap is {wrap}")
+
+    for step in steps:
+        text = case(step.text)
+        if step.kind == "blank":
+            segments.append(Segment(t, t, lambda t: "", ""))
+            end = t
+        elif step.kind == "line":
+            end, show = typing(t, text)
+            check(step, text)
+            segments.append(Segment(t, end, show, text))
+        elif step.kind == "status":
+            typed = lead(text)
+            done, show = typing(t, typed)
+            end = done + timing.status_pause
+            final = typed + case(step.value)
+            check(step, final)
+            segments.append(Segment(t, end, show, final))
+        else:
+            typed = lead(text) if step.kind == "count" else text + " "
+            span = timing.count_time if step.kind == "count" else timing.bar_time
+            fill = value_text if step.kind == "count" else bar_text
+
+            def after(now, done, step=step, span=span, fill=fill):
+                return fill(step, min(1.0, (now - done) / span) if span else 1.0)
+            done, show = typing(t, typed, after)
+            end = done + span
+            check(step, typed + fill(step, 0.0), typed + fill(step, 1.0))
+            segments.append(Segment(t, end, show, typed + fill(step, 1.0)))
+        t = end + timing.gap
+    duration = (t - timing.gap if steps else 0.0) + timing.hold
+    return Boot(segments, clicks, duration)

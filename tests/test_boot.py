@@ -1,6 +1,6 @@
 import pytest
 
-from muthur.boot import Step, split_boot
+from muthur.boot import Step, Timing, plan, split_boot
 
 EXAMPLE = """[BOOT start]
 WZNAWIANIE SYSTEMÓW POKŁADOWYCH
@@ -61,3 +61,47 @@ def test_leading_blank_lines_before_the_block_are_ignored():
 def test_malformed_blocks_name_the_line(source, message):
     with pytest.raises(SystemExit, match=message):
         split_boot(source)
+
+
+T = Timing(type_speed=10, status_pause=1, bar_time=1, count_time=1, hold=2, gap=0)
+
+
+def test_line_is_typed_at_the_type_speed():
+    boot = plan([Step("line", "abcd", 1)], T, 54, False)
+    assert boot.lines_at(0.15) == ["ab"]  # letter i appears at i / type_speed
+    assert boot.lines_at(0.45) == ["abcd"]
+    assert boot.duration == pytest.approx(0.4 + 2)
+
+
+def test_clicks_fall_on_typed_letters_but_not_spaces():
+    assert plan([Step("line", "a b", 1)], T, 54, False).clicks == pytest.approx([0.0, 0.2])
+
+
+def test_status_values_line_up_after_the_pause():
+    steps = [Step("status", "ATMOSFERA", 1, value="OK"), Step("status", "OŚWIETLENIE", 2, value="WŁĄCZONE")]
+    boot = plan(steps, T, 54, False)
+    assert boot.lines_at(boot.duration) == ["ATMOSFERA ..... OK", "OŚWIETLENIE ... WŁĄCZONE"]
+    typed = len("ATMOSFERA ..... ") / 10
+    assert boot.lines_at(typed + 0.5) == ["ATMOSFERA ..... "]
+
+
+def test_bar_fills_and_counts_to_the_end_value():
+    boot = plan([Step("bar", "R", 1, start=1, end=100, label="%")], T, 54, False)
+    assert boot.lines_at(0.2 + 0.4) == ["R " + "█" * 6 + "░" * 9 + "  " + "41%"]
+    assert boot.lines_at(boot.duration) == ["R " + "█" * 15 + "  100%"]
+
+
+def test_value_counts_through_whole_numbers():
+    boot = plan([Step("count", "T", 1, start=-10, end=21, label="°C")], T, 54, False)
+    assert boot.lines_at(boot.duration)[0].endswith("21°C")
+    assert boot.lines_at(len("T ... ") / 10)[0].endswith("-10°C")
+
+
+def test_upper_casing_skips_the_label():
+    boot = plan([Step("count", "ciśnienie", 1, start=1, end=2, label="kPa")], T, 54, True)
+    assert boot.lines_at(boot.duration) == ["CIŚNIENIE ... 2kPa"]
+
+
+def test_line_wider_than_wrap_names_the_line():
+    with pytest.raises(SystemExit, match=r"line 7: .*--wrap is 10"):
+        plan([Step("status", "TEMPERATURA", 7, value="OK")], T, 10, False)

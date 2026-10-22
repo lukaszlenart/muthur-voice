@@ -15,7 +15,7 @@ import shutil
 import sys
 import tempfile
 
-from muthur import align, config, mux, narration, render, timing, update
+from muthur import align, boot, config, mux, narration, render, timing, update
 from muthur.text import read_text
 
 VOICE = "pl-PL-ZofiaNeural"
@@ -55,6 +55,19 @@ def build_parser():
     r.add_argument("--wrap", type=int, default=54, help="characters per line")
     r.add_argument("--font")
     r.add_argument("--title", default="MU/TH/UR 6000 :: USCSS MONTERO")
+    b = boot.Timing()
+    r.add_argument("--boot-type-speed", type=float, default=b.type_speed,
+                   help="boot screen: letters typed per second (default %(default)s)")
+    r.add_argument("--boot-status-pause", type=float, default=b.status_pause,
+                   help="boot screen: seconds before a status value appears (default %(default)s)")
+    r.add_argument("--boot-bar-time", type=float, default=b.bar_time,
+                   help="boot screen: seconds for a progress bar to fill (default %(default)s)")
+    r.add_argument("--boot-count-time", type=float, default=b.count_time,
+                   help="boot screen: seconds for a value to count up (default %(default)s)")
+    r.add_argument("--boot-hold", type=float, default=b.hold,
+                   help="boot screen: seconds to hold the last line (default %(default)s)")
+    r.add_argument("--boot-clicks", action=argparse.BooleanOptionalAction, default=True,
+                   help="typing clicks on the boot screen")
 
     v = sub.add_parser("voices", help="read a sample sentence with several voices and play them in turn")
     v.add_argument("--config", help=f"settings file (default: ./{config.FILENAME} if present)")
@@ -71,14 +84,21 @@ def build_parser():
     return ap
 
 
-def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title, fx):
-    total, frames = render.iter_frames(cues, image, font_path, wrap, upper, title)
-    mux.encode(frames, total, mux.ffmpeg_command(total, audio, hum, out, fx), out)
+def render_video(cues, audio, out, image, font_path, wrap, upper, hum, title, fx, *, boot_screen=None,
+                 clicks=None):
+    total, frames = render.iter_frames(cues, image, font_path, wrap, upper, title, boot=boot_screen)
+    delay = (boot_screen.duration if boot_screen else 0.0) + render.LEAD_IN
+    if clicks:
+        mux.write_clicks(boot_screen.clicks, total, clicks)
+    mux.encode(frames, total, mux.ffmpeg_command(total, audio, hum, out, fx, delay=delay, clicks=clicks), out)
 
 
 def render_command(a):
     out = a.out or os.path.splitext(a.text)[0] + ".mp4"
-    raw = read_text(a.text).strip()
+    steps, raw = boot.split_boot(read_text(a.text).strip())
+    pace = boot.Timing(a.boot_type_speed, a.boot_status_pause, a.boot_bar_time, a.boot_count_time,
+                          a.boot_hold)
+    boot_screen = boot.plan(steps, pace, a.wrap, a.upper) if steps else None
 
     with tempfile.TemporaryDirectory() as tmp:
         if a.audio:
@@ -99,8 +119,9 @@ def render_command(a):
             print(f"  narration: {a.voice} ({', '.join(filter(None, [a.rate, a.pitch]))})")
             audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp, pitch=a.pitch)
             shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
+        clicks = os.path.join(tmp, "clicks.wav") if boot_screen and a.boot_clicks else None
         render_video(cues, audio, out, a.image, a.font, a.wrap, a.upper, a.hum, a.title,
-                     a.voice_fx)
+                     a.voice_fx, boot_screen=boot_screen, clicks=clicks)
 
 
 def voices_command(a):
@@ -146,6 +167,12 @@ def parse_args(argv=None, check_files=False):
         for key, flag, used in [("srt", "--srt", a.srt), ("align", "--no-align", not a.align)]:
             if used:
                 fail(key, f"{flag} needs --audio", "needs audio")
+    if a.boot_type_speed <= 0:
+        fail("boot_type_speed", "--boot-type-speed must be more than 0", "must be more than 0")
+    for key in ["boot_status_pause", "boot_bar_time", "boot_count_time", "boot_hold"]:
+        if getattr(a, key) < 0:
+            flag = "--" + key.replace("_", "-")
+            fail(key, f"{flag} must be 0 or more", "must be 0 or more")
     if check_files:
         if not os.path.isfile(a.text):
             parser.error(f"text not found: {a.text}")

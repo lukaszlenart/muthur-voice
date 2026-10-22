@@ -207,3 +207,15 @@ def test_number_setting_rejects_strings_and_booleans(toml, float_flag, content):
     toml(f"[render]\n{content}\n")
     with pytest.raises(SystemExit, match=r"\]\.pace must be a number"):
         cli.parse_args(["render", "intro.txt"])
+
+
+def test_boot_timing_comes_from_the_file(toml):
+    toml("[render]\nboot_hold = 2.5\n")
+    assert cli.parse_args(["render", "intro.txt"]).boot_hold == 2.5
+
+
+def test_zero_type_speed_in_the_file_names_the_file(toml, capsys):
+    toml("[render]\nboot_type_speed = 0\n")
+    with pytest.raises(SystemExit):
+        cli.parse_args(["render", "intro.txt"])
+    assert "boot_type_speed in muthur.toml" in capsys.readouterr().err

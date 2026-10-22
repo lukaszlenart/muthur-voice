@@ -49,6 +49,10 @@ def defaults(parser, section, values, path):
         elif action.type is int:
             if type(value) is not int:
                 sys.exit(f"{where} must be a whole number")
+        elif action.type is float:
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                sys.exit(f"{where} must be a number")
+            value = float(value)
         elif not isinstance(value, str):
             sys.exit(f"{where} must be a string")
         if action.choices is not None and value not in action.choices:

@@ -142,7 +142,29 @@ def wake_up():
     return glow(img, lambda g: g.ellipse((cx - 40, cy - 40, cx + 40, cy + 40), fill=255), 40, 1.5)
 
 
-SCENES = {"orbit": orbit, "signal": signal, "corridor": corridor, "wake-up": wake_up}
+def cold_start():
+    rng = random.Random(5)
+    img = blank((6, 6, 6))
+    cx, top, bottom = W * 0.62, H * 0.08, H * 0.98
+    img = glow(img, lambda g: g.rectangle((cx - 170, top, cx + 170, bottom), fill=150), 160)
+    d = ImageDraw.Draw(img)
+    d.rectangle((cx - 110, top, cx + 110, bottom), fill=(40, 40, 40), outline=(160, 160, 160), width=5)
+    for y in range(int(top) + 60, int(bottom), 110):
+        d.rectangle((cx - 135, y, cx + 135, y + 22), fill=(90, 90, 90))
+    img = glow(img, lambda g: g.rectangle((cx - 40, top + 30, cx + 40, bottom), fill=255), 45, 1.6)
+    grille = img.copy()
+    d = ImageDraw.Draw(grille)
+    for y in range(0, H, 72):
+        d.rectangle((0, y, W, y + 14), fill=(4, 4, 4))
+    img = Image.blend(img, grille, 0.75)
+    d = ImageDraw.Draw(img)
+    for _ in range(24):
+        x, y = rng.randrange(80, int(cx) - 260), rng.choice(range(7, H, 72))
+        d.ellipse((x - 3, y - 3, x + 3, y + 3), fill=(rng.randint(80, 200),) * 3)
+    return img
+
+
+SCENES = {"orbit": orbit, "signal": signal, "corridor": corridor, "wake-up": wake_up, "cold-start": cold_start}
 
 
 def main():

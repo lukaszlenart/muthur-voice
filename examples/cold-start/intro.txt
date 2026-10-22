@@ -1,0 +1,19 @@
+[BOOT start]
+MU/TH/UR 6000 — ZIMNY START
+[ProgressBar: 0..100, label: %, text: Rozruch reaktora]
+[Status: AKTYWNE, text: Podtrzymywanie życia]
+[Status: WŁĄCZONE, text: Oświetlenie]
+[ProgressValue: -12..19, label: °C, text: Temperatura pokładu]
+[ProgressValue: 62..101, label: kPa, text: Ciśnienie]
+[Status: ZDATNA DO ODDYCHANIA, text: Atmosfera]
+
+INICJACJA SEKWENCJI WYBUDZANIA ZAŁOGI
+[BOOT end]
+Raport systemowy.
+Jednostka: USCSS Kestrel. Reaktor osiągnął pełną moc. Systemy pokładowe działają w normie.
+Statek przez wiele miesięcy dryfował w trybie minimalnego zużycia energii.
+Kadłub jest zimny, ale powietrze znów nadaje się do oddychania.
+Komory hipersnu otworzą się za kilka minut.
+Pierwsze godziny po przebudzeniu bywają trudne. Pijcie dużo wody i jedzcie powoli.
+Przed wami nowe zlecenie od Firmy.
+Witamy z powrotem, załogo.

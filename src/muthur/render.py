@@ -105,31 +105,49 @@ def render_text_layer(t, blocks, font, line_h, max_lines, cursor_on):
     return layer
 
 
-def timeline(cues):
-    shifted = [[a + LEAD_IN, z + LEAD_IN, s] for a, z, s in cues]
+def render_boot_layer(lines, font, line_h, max_lines, cursor_on):
+    layer = Image.new("RGB", (W, H), (0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    lines = (lines or [""])[-max_lines:]
+    x0 = 140
+    y0 = 140
+    for k, txt in enumerate(lines):
+        d.text((x0, y0 + k * line_h), txt, font=font, fill=GREEN)
+    if cursor_on:
+        cx = x0 + d.textlength(lines[-1], font=font) + 6
+        cy = y0 + (len(lines) - 1) * line_h
+        d.rectangle((cx, cy + 6, cx + font.size * 0.55, cy + font.size + 4), fill=GREEN)
+    return layer
+
+
+def timeline(cues, offset=0.0):
+    shifted = [[a + offset + LEAD_IN, z + offset + LEAD_IN, s] for a, z, s in cues]
     total = (shifted[-1][1] if shifted else 5) + TAIL
     return shifted, total
 
 
-def iter_frames(cues, image, font_path, wrap, upper, title):
+def iter_frames(cues, image, font_path, wrap, upper, title, boot=None):
     font = load_font(46, font_path)
     font_small = load_font(28, font_path)
     line_h = 66
     max_lines = (H - 140 - 120) // line_h
-    shifted, total = timeline(cues)
+    shifted, total = timeline(cues, boot.duration if boot else 0.0)
     blocks = build_blocks(shifted, wrap, upper)
     bg = make_background(image, title, font_small)
-    return total, _frames(total, blocks, bg, font, line_h, max_lines)
+    return total, _frames(total, blocks, bg, font, line_h, max_lines, boot)
 
 
-def _frames(total, blocks, bg, font, line_h, max_lines):
+def _frames(total, blocks, bg, font, line_h, max_lines, boot=None):
     scan = make_scanlines()
     black = Image.new("RGB", (W, H))
     rnd = random.Random(42)
     for f in range(int(total * FPS)):
         t = f / FPS
         cursor_on = (int(t * 2.5) % 2) == 0
-        text = render_text_layer(t, blocks, font, line_h, max_lines, cursor_on)
+        if boot and t < boot.duration:
+            text = render_boot_layer(boot.lines_at(t), font, line_h, max_lines, cursor_on)
+        else:
+            text = render_text_layer(t, blocks, font, line_h, max_lines, cursor_on)
         glow = text.resize((W // 4, H // 4)).filter(ImageFilter.GaussianBlur(6)).resize((W, H))
         mask = text.convert("L").point(lambda p: 255 if p > 20 else 0)
         frame = Image.composite(text, bg, mask)

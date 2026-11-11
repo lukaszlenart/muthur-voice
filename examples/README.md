@@ -9,7 +9,7 @@ Each folder is a ready intro: a Polish `intro.txt`, a `muthur.toml` and a `backg
 | `orbit` | planet from orbit, arrival | `voice_fx = "echo"` |
 | `signal` | freighter silhouette, distress signal | `upper = false`, `wrap = 46` |
 | `cold-start` | reactor core, ship powers up | a [boot sequence](../README.md#boot-sequence) before the narration, `boot_type_speed = 26`, `boot_hold = 2.5` |
-| `rydwan-bogow` | tritium tanks in the cargo hold, intro to the *Rydwan Bogów* scenario | a boot sequence with cargo, sensor and hypersleep readouts |
+| `rydwan-bogow` | tritium tanks in the cargo hold, intro to the *Rydwan Bogów* scenario | a boot sequence with cargo, sensor and hypersleep readouts, `[pronounce]` for foreign names |
 
 ```fish
 uv run muthur render examples/orbit/intro.txt --config examples/orbit/muthur.toml

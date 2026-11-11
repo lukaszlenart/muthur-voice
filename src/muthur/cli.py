@@ -16,7 +16,7 @@ import sys
 import tempfile
 
 from muthur import align, boot, config, mux, narration, render, timing, update
-from muthur.text import read_text
+from muthur.text import read_text, respell, restore
 
 VOICE = "pl-PL-ZofiaNeural"
 RATE = "-20%"
@@ -68,6 +68,7 @@ def build_parser():
                    help="boot screen: seconds to hold the last line (default %(default)s)")
     r.add_argument("--boot-clicks", action=argparse.BooleanOptionalAction, default=True,
                    help="typing clicks on the boot screen")
+    r.set_defaults(pronounce={})
 
     v = sub.add_parser("voices", help="read a sample sentence with several voices and play them in turn")
     v.add_argument("--config", help=f"settings file (default: ./{config.FILENAME} if present)")
@@ -101,16 +102,22 @@ def render_command(a):
                           a.boot_hold, start=render.POWER_ON)
     boot_screen = boot.plan(steps, pace, a.wrap, a.upper) if steps else None
 
+    spoken = respell(raw, a.pronounce)
+
+    def written(cues):
+        return [[start, end, restore(sentence, a.pronounce)] for start, end, sentence in cues]
+
     with tempfile.TemporaryDirectory() as tmp:
         if a.audio:
             audio = a.audio
             if a.srt:
-                cues = timing.parse_srt(a.srt)
+                cues = written(timing.parse_srt(a.srt))
             else:
-                cues = align.align_cues(raw, audio, a.whisper_model) if a.align else None
+                cues = align.align_cues(spoken, audio, a.whisper_model) if a.align else None
                 if cues is None:
                     cues = timing.estimate_cues(raw)
                 else:
+                    cues = written(cues)
                     srt_out = os.path.splitext(out)[0] + "_napisy.srt"
                     timing.write_srt(cues, srt_out)
                     print(f"  subtitles saved: {srt_out} (fix by hand and pass with --srt if needed)")
@@ -118,7 +125,8 @@ def render_command(a):
             audio, cues = None, timing.estimate_cues(raw)
         else:
             print(f"  narration: {a.voice} ({', '.join(filter(None, [a.rate, a.pitch]))})")
-            audio, cues = narration.run_tts(raw, a.voice, a.rate, tmp, pitch=a.pitch)
+            audio, cues = narration.run_tts(spoken, a.voice, a.rate, tmp, pitch=a.pitch)
+            cues = written(cues)
             shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
         clicks = os.path.join(tmp, "clicks.wav") if boot_screen and a.boot_clicks else None
         render_video(cues, audio, out, a.image, a.font, a.wrap, a.upper, a.hum, a.title,

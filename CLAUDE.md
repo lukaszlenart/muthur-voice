@@ -25,7 +25,8 @@ hashes recorded from that prototype.
 - Whisper alignment on the real `lektor.mp3` (2026-10-14): `medium` matched 15/16 sentences, all
   within ~0.3 s of the recording's pauses, so it is the default; `small` matched 8/16 and `base` 5/16, both
   badly misplaced (short common words match at the wrong place in the audio and pin sentences to the wrong times).
-- TTS mispronounces tokens like "MU/TH/UR"; there is no spoken-vs-displayed text override yet.
+- TTS mispronounces tokens like "MU/TH/UR"; `[pronounce]` in `muthur.toml` respells them for the voice only
+  (`text.respell` before TTS/Whisper, `text.restore` on the cues before the screen).
 - edge-tts has only two native Polish voices (Zofia, Marek); `*MultilingualNeural` voices can also
   read Polish. Listening for #2 (2026-10-14) settled the defaults: Zofia at `--rate=-20% --pitch=-24Hz`
   through `--voice-fx intercom`, the best so far but not ideal. On 2026-10-22 the user switched the

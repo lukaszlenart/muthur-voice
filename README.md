@@ -149,6 +149,22 @@ rate = "-20%"
 text = "Procedura wybudzania zakończona. Witamy z powrotem, załogo."
 ```
 
+### Pronunciation
+
+TTS reads foreign names the Polish way. A `[pronounce]` section in `muthur.toml` tells the voice
+how to say a word while the screen keeps the written form:
+
+```toml
+[pronounce]
+"Weyland-Yutani" = "Łejland-Jutani"
+"Anchorpoint" = "Ankorpojnt"
+```
+
+A word is replaced wherever it starts, so Polish endings carry over (`Anchorpointu` is read
+`Ankorpojntu`); the longest written form wins. The spoken form can't contain `.` `!` `?` or `:`,
+which would change how the text splits into sentences. With `--audio`, Whisper matches the spoken
+form, the way the narrator says it.
+
 ### Choosing a voice
 
 edge-tts has two native Polish voices (`pl-PL-ZofiaNeural`, `pl-PL-MarekNeural`). The

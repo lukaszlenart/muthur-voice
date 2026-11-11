@@ -4,3 +4,7 @@ title = "MU/TH/UR 6000 :: USCSS MONTERO"
 image = "background.jpg"
 boot_type_speed = 26
 boot_hold = 2.5
+
+[pronounce]
+"Weyland-Yutani" = "Łejland-Jutani"
+"Anchorpoint" = "Ankorpojnt"

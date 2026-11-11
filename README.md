@@ -160,8 +160,8 @@ how to say a word while the screen keeps the written form:
 "Anchorpoint" = "Ankorpojnt"
 ```
 
-A word is replaced wherever it starts, so Polish endings carry over (`Anchorpointu` is read
-`Ankorpojntu`); the longest written form wins. The spoken form can't contain `.` `!` `?` or `:`,
+A word is replaced wherever it starts, ignoring case, so Polish endings carry over (`Anchorpointu`
+is read `Ankorpojntu`) and the screen keeps each word as you typed it; the longest written form wins. The spoken form can't contain `.` `!` `?` or `:`,
 which would change how the text splits into sentences. With `--audio`, Whisper matches the spoken
 form, the way the narrator says it.
 

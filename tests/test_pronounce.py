@@ -8,34 +8,55 @@ from muthur.text import respell, restore
 WORDS = {"Weyland-Yutani": "Łejland-Jutani", "Anchorpoint": "Ankorpojnt"}
 
 
+def spoken(text, pronounce=WORDS):
+    return respell(text, pronounce)[0]
+
+
 def test_respell_replaces_every_occurrence():
-    assert respell("Z Anchorpoint do Anchorpoint.", WORDS) == "Z Ankorpojnt do Ankorpojnt."
+    assert spoken("Z Anchorpoint do Anchorpoint.") == "Z Ankorpojnt do Ankorpojnt."
 
 
 def test_respell_keeps_polish_endings():
-    assert respell("Ze stacji Anchorpointu, od Weyland-Yutani.", WORDS) == "Ze stacji Ankorpojntu, od Łejland-Jutani."
+    assert spoken("Ze stacji Anchorpointu, od Weyland-Yutani.") == "Ze stacji Ankorpojntu, od Łejland-Jutani."
 
 
 def test_respell_ignores_a_match_inside_a_word():
-    assert respell("XAnchorpoint", WORDS) == "XAnchorpoint"
+    assert spoken("XAnchorpoint") == "XAnchorpoint"
 
 
 def test_respell_prefers_the_longest_written_form():
-    assert respell("Weyland-Yutani i Weyland.", {"Weyland": "Łejland", "Weyland-Yutani": "Łejland-Jutani"}) == (
+    assert spoken("Weyland-Yutani i Weyland.", {"Weyland": "Łejland", "Weyland-Yutani": "Łejland-Jutani"}) == (
         "Łejland-Jutani i Łejland.")
 
 
 def test_respell_does_not_respell_its_own_output():
-    assert respell("A B", {"A": "B", "B": "C"}) == "B C"
+    assert spoken("A B", {"A": "B", "B": "C"}) == "B C"
 
 
-def test_restore_undoes_respell():
-    text = "Ze stacji Anchorpointu, od Weyland-Yutani."
-    assert restore(respell(text, WORDS), WORDS) == text
+def test_respell_ignores_case():
+    assert spoken('Cenny "hel-3", HEL-3 i Hel-3.', {"Hel-3": "hel trzy"}) == 'Cenny "hel trzy", hel trzy i hel trzy.'
+
+
+def test_restore_undoes_respell_keeping_each_original_case():
+    text = "Hel-3 ze stacji ANCHORPOINT, Anchorpointu i hel-3, od Weyland-Yutani."
+    pronounce = dict(WORDS, **{"hel-3": "hel trzy"})
+    said, replaced = respell(text, pronounce)
+    assert restore(said, pronounce, iter(replaced)) == text
+
+
+def test_restore_consumes_replaced_words_across_calls():
+    pronounce = {"hel-3": "hel trzy"}
+    replaced = iter(["HEL-3", "Hel-3"])
+    assert [restore(s, pronounce, replaced) for s in ["Rozpad w hel trzy.", "Cenny hel trzy."]] == [
+        "Rozpad w HEL-3.", "Cenny Hel-3."]
+
+
+def test_restore_without_record_uses_the_configured_spelling():
+    assert restore("Ze stacji ankorpojnt.", WORDS, iter([])) == "Ze stacji Anchorpoint."
 
 
 def test_restore_tolerates_changed_spacing():
-    assert restore("Ze stacji Ankor\npojnt.", {"Anchorpoint": "Ankor pojnt"}) == "Ze stacji Anchorpoint."
+    assert restore("Ze stacji Ankor\npojnt.", {"Anchorpoint": "Ankor pojnt"}, iter([])) == "Ze stacji Anchorpoint."
 
 
 @pytest.fixture

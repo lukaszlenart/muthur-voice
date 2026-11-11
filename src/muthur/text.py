@@ -16,16 +16,34 @@ def norm_word(w):
 
 
 def respell(text, pronounce):
-    """Swap written words for how the narrator should say them; Polish endings after a word are kept."""
+    """Swap written words for how the narrator should say them, ignoring case; Polish endings are kept.
+
+    Returns the spoken text and the written words it replaced, in order, for `restore`.
+    """
     if not pronounce:
-        return text
-    words = "|".join(re.escape(w) for w in sorted(pronounce, key=len, reverse=True))
-    return re.sub(rf"(?<!\w)({words})", lambda m: pronounce[m[1]], text)
+        return text, []
+    spoken = {w.lower(): s for w, s in pronounce.items()}
+    replaced = []
+
+    def swap(m):
+        replaced.append(m[1])
+        return spoken[m[1].lower()]
+
+    return re.sub(rf"(?<!\w)({_alternation(pronounce)})", swap, text, flags=re.IGNORECASE), replaced
 
 
-def restore(text, pronounce):
+def restore(text, pronounce, replaced):
+    """Put the written words back; `replaced` is an iterator over what `respell` replaced, consumed in order."""
     if not pronounce:
         return text
-    written = {" ".join(spoken.split()): w for w, spoken in pronounce.items()}
-    spoken = "|".join(r"\s+".join(map(re.escape, s.split())) for s in sorted(written, key=len, reverse=True))
-    return re.sub(rf"(?<!\w)({spoken})", lambda m: written[" ".join(m[1].split())], text)
+    written = {_key(s): w for w, s in pronounce.items()}
+    return re.sub(rf"(?<!\w)({_alternation(pronounce.values())})",
+                  lambda m: next(replaced, None) or written[_key(m[1])], text, flags=re.IGNORECASE)
+
+
+def _key(spoken):
+    return " ".join(spoken.split()).lower()
+
+
+def _alternation(words):
+    return "|".join(r"\s+".join(map(re.escape, w.split())) for w in sorted(words, key=len, reverse=True))

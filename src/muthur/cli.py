@@ -102,10 +102,11 @@ def render_command(a):
                           a.boot_hold, start=render.POWER_ON)
     boot_screen = boot.plan(steps, pace, a.wrap, a.upper) if steps else None
 
-    spoken = respell(raw, a.pronounce)
+    spoken, replaced = respell(raw, a.pronounce)
 
-    def written(cues):
-        return [[start, end, restore(sentence, a.pronounce)] for start, end, sentence in cues]
+    def written(cues, replaced=()):
+        replaced = iter(replaced)
+        return [[start, end, restore(sentence, a.pronounce, replaced)] for start, end, sentence in cues]
 
     with tempfile.TemporaryDirectory() as tmp:
         if a.audio:
@@ -117,7 +118,7 @@ def render_command(a):
                 if cues is None:
                     cues = timing.estimate_cues(raw)
                 else:
-                    cues = written(cues)
+                    cues = written(cues, replaced)
                     srt_out = os.path.splitext(out)[0] + "_napisy.srt"
                     timing.write_srt(cues, srt_out)
                     print(f"  subtitles saved: {srt_out} (fix by hand and pass with --srt if needed)")
@@ -126,7 +127,7 @@ def render_command(a):
         else:
             print(f"  narration: {a.voice} ({', '.join(filter(None, [a.rate, a.pitch]))})")
             audio, cues = narration.run_tts(spoken, a.voice, a.rate, tmp, pitch=a.pitch)
-            cues = written(cues)
+            cues = written(cues, replaced)
             shutil.copy(audio, os.path.splitext(out)[0] + "_lektor.mp3")
         clicks = os.path.join(tmp, "clicks.wav") if boot_screen and a.boot_clicks else None
         render_video(cues, audio, out, a.image, a.font, a.wrap, a.upper, a.hum, a.title,

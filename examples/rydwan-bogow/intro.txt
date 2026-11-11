@@ -9,8 +9,8 @@ MU/TH/UR 6000 — USCSS MONTERO
 INICJACJA SEKWENCJI WYBUDZANIA ZAŁOGI
 [BOOT end]
 Raport przewozowy.
-Jednostka: USCSS Montero. Kurs: Przeprawa, ze stacji Anchorpoint na Pogranicze.
-W ładowni wieziecie zbiorniki z trytem w stanie gazowym. Tryt rozpada się i przemienia w niezwykle cenny "hel-3".
+Jednostka: USCSS MONTERO. Kurs: Przeprawa, ze stacji Anchorpoint na Pogranicze.
+W ładowni znajdują się zbiorniki z trytem w stanie gazowym. Tryt rozpada się i przemienia w niezwykle cenny hel-3.
 Taki ładunek zwykle holuje się w olbrzymich zbiornikach, z dala od statku. Montero nie jest holownikiem.
 To zamówienie specjalne od przedstawiciela Weyland-Yutani na Świecie Suttera, nowej kolonii na Pograniczu.
 Tuż przed startem z Anchorpoint czujniki zaczęły działać błędnie. Do skoku w nadświetlną sporadycznie zgłaszały nieznany obiekt.

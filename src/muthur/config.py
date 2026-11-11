@@ -1,6 +1,7 @@
 """Defaults for the CLI from a TOML file: one section per subcommand, keys named after the long flags."""
 import argparse
 import os
+import re
 import sys
 import tomllib
 
@@ -63,8 +64,27 @@ def defaults(parser, section, values, path):
     return out
 
 
+def pronunciations(values, path):
+    out = {}
+    for written, spoken in values.items():
+        where = f"{path}: [pronounce].{written}"
+        if not written.strip():
+            sys.exit(f"{path}: [pronounce] has an empty word")
+        if not isinstance(spoken, str):
+            sys.exit(f"{where} must be a string")
+        if not spoken.strip():
+            sys.exit(f"{where} must not be empty")
+        if re.search(r"[.!?:]", spoken):
+            sys.exit(f"{where} must not contain . ! ? or :")
+        out[written] = spoken
+    return out
+
+
 def apply(subparsers, data, path):
     for section, values in data.items():
+        if section == "pronounce" and isinstance(values, dict):
+            subparsers["render"].set_defaults(pronounce=pronunciations(values, path))
+            continue
         parser = subparsers.get(section)
         if parser is None or not isinstance(values, dict):
             sys.exit(f"{path}: unknown section [{section}]")

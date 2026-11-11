@@ -1,0 +1,6 @@
+# Intro for the "Rydwan Bogów" scenario: a boot screen with the cargo and a faulty sensor.
+[render]
+title = "MU/TH/UR 6000 :: USCSS MONTERO"
+image = "background.jpg"
+boot_type_speed = 26
+boot_hold = 2.5

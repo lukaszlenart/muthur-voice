@@ -8,7 +8,7 @@ from muthur.render import H, W
 from muthur.text import read_text, split_sentences
 
 EXAMPLES = Path(__file__).resolve().parent.parent / "examples"
-NAMES = ["wake-up", "corridor", "orbit", "signal", "cold-start"]
+NAMES = ["wake-up", "corridor", "orbit", "signal", "cold-start", "rydwan-bogow"]
 
 
 def test_every_example_folder_is_listed():

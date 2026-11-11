@@ -164,7 +164,30 @@ def cold_start():
     return img
 
 
-SCENES = {"orbit": orbit, "signal": signal, "corridor": corridor, "wake-up": wake_up, "cold-start": cold_start}
+def rydwan_bogow():
+    img = blank((8, 8, 8))
+    d = ImageDraw.Draw(img)
+    r, gap, rows, cols = 70, 24, 3, 7
+    x0 = (W - cols * (2 * r + gap) + gap) / 2
+    y0 = H * 0.2
+    for x in range(0, W + 1, W // 6):
+        d.rectangle((x - 9, 0, x + 9, H), fill=(18, 18, 18))
+    for row in range(rows):
+        y = y0 + row * (2 * r + 90)
+        d.rectangle((0, y + 2 * r + 10, W, y + 2 * r + 28), fill=(60, 60, 60))
+        for col in range(cols):
+            x = x0 + col * (2 * r + gap)
+            d.rounded_rectangle((x, y, x + 2 * r, y + 2 * r), radius=r, fill=(34, 34, 34), outline=(140, 140, 140), width=4)
+            d.rounded_rectangle((x + r * 0.35, y + r * 0.25, x + r * 0.55, y + r * 1.75), radius=8, fill=(90, 90, 90))
+            d.line((x + r, y + 2 * r, x + r, y + 2 * r + 10), fill=(110, 110, 110), width=6)
+    lamps = [(x0 + col * (2 * r + gap) + r, H * 0.08) for col in range(0, cols, 2)]
+    img = glow(img, lambda g: [g.ellipse((x - 220, y - 40, x + 220, y + 260), fill=110) for x, y in lamps], 90)
+    img = glow(img, lambda g: [g.rectangle((x - 50, y - 6, x + 50, y + 6), fill=255) for x, y in lamps], 10, 2.0)
+    return glow(img, lambda g: g.ellipse((W * 0.93 - 6, H * 0.9 - 6, W * 0.93 + 6, H * 0.9 + 6), fill=255), 9, 3.0)
+
+
+SCENES = {"orbit": orbit, "signal": signal, "corridor": corridor, "wake-up": wake_up, "cold-start": cold_start,
+          "rydwan-bogow": rydwan_bogow}
 
 
 def main():

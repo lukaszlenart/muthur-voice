@@ -1,0 +1,20 @@
+[BOOT start]
+MU/TH/UR 6000 — USCSS MONTERO
+[Status: AKTYWNE, text: Podtrzymywanie życia]
+[Status: STABILNY, text: Ładunek: tryt w stanie gazowym]
+[ProgressValue: 0..37, label: %, text: Rozpad w hel-3]
+[Status: BŁĄD, text: Czujniki dalekiego zasięgu]
+[ProgressValue: 4..36, label: °C, text: Komory hipersnu]
+
+INICJACJA SEKWENCJI WYBUDZANIA ZAŁOGI
+[BOOT end]
+Raport przewozowy.
+Jednostka: USCSS Montero. Kurs: Przeprawa, ze stacji Anchorpoint na Pogranicze.
+W ładowni wieziecie zbiorniki z trytem w stanie gazowym. Tryt rozpada się i przemienia w niezwykle cenny hel-3.
+Taki ładunek zwykle holuje się w olbrzymich zbiornikach, z dala od statku. Montero nie jest holownikiem.
+To zamówienie specjalne od przedstawiciela Weyland-Yutani na Świecie Suttera, nowej kolonii na Pograniczu.
+Tuż przed startem z Anchorpoint czujniki zaczęły działać błędnie. Do skoku w nadświetlną sporadycznie zgłaszały nieznany obiekt.
+Od tamtej pory nie wydarzyło się nic nadzwyczajnego.
+Hibernacja dobiega końca.
+Cel: Świat Suttera. Ładunek czeka na dostawę.
+Witamy z powrotem!

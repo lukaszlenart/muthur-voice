@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="screen" cx="50%" cy="45%" r="70%">
+      <stop offset="0" stop-color="#0f2a16"/><stop offset="0.7" stop-color="#06140a"/><stop offset="1" stop-color="#020604"/>
+    </radialGradient>
+    <linearGradient id="bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3d3a"/><stop offset="1" stop-color="#1c1e1c"/>
+    </linearGradient>
+    <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="2" fill="#000" opacity="0.35"/></pattern>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="glass"><rect x="72" y="72" width="368" height="368" rx="48"/></clipPath>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="80" fill="url(#bezel)"/>
+  <rect x="40" y="40" width="432" height="432" rx="74" fill="none" stroke="#4a4e4a" stroke-width="3"/>
+  <rect x="72" y="72" width="368" height="368" rx="48" fill="url(#screen)"/>
+  <g clip-path="url(#glass)">
+    <g filter="url(#glow)">
+      <path d="M126 162 L196 208 L126 254" fill="none" stroke="#78FF8C" stroke-width="26" stroke-linecap="square"/>
+      <rect x="232" y="150" width="62" height="116" fill="#78FF8C"/>
+      <path d="M118 352 h56 l14 -30 l18 62 l18 -86 l18 104 l18 -72 l16 44 l14 -22 h78"
+            fill="none" stroke="#3C964B" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+    </g>
+    <rect x="72" y="72" width="368" height="368" fill="url(#scan)"/>
+  </g>
+  <rect x="72" y="72" width="368" height="368" rx="48" fill="none" stroke="#000" stroke-opacity="0.6" stroke-width="8"/>
+</svg>

@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/logo.svg" alt="MU/TH/UR terminal screen" width="280"></p>
+
 # muthur-voice
 
 Turns a text file into a short video for a TV screen: a voice narration plus on-screen text styled
